@@ -6,21 +6,27 @@
 <title>Dreemurr Dynasty — Character Creation</title>
 <style>
     :root {
-        --bg: #000;
+        --bg: #050505;
+        --bg-2: #0a0a0a;
         --fg: #fff;
         --accent: #ff0;
         --accent-dim: #aa0;
-        --dim: #888;
-        --panel: #0a0a0a;
+        --dim: #777;
+        --panel: #0b0b0b;
+        --panel-2: #101010;
         --border: #fff;
         --heart: #ff0;
         --danger: #f33;
         --font: 'Courier New', Courier, monospace;
+        --px: 4px; /* шаг пиксельной обводки */
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
     body {
-        background: var(--bg);
+        background:
+            radial-gradient(ellipse at 50% 0%, rgba(255,255,0,0.04), transparent 60%),
+            radial-gradient(ellipse at 50% 100%, rgba(255,255,255,0.03), transparent 60%),
+            var(--bg);
         color: var(--fg);
         font-family: var(--font);
         min-height: 100vh;
@@ -28,92 +34,159 @@
         justify-content: center;
         align-items: center;
         padding: 24px 16px;
-        line-height: 1.4;
-        -webkit-font-smoothing: antialiased;
+        line-height: 1.45;
+        -webkit-font-smoothing: none;
+        font-smooth: never;
         image-rendering: pixelated;
+        position: relative;
+    }
+    /* Скан-линии для «дорогого» CRT-вида */
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+            to bottom,
+            rgba(255,255,255,0.015) 0px,
+            rgba(255,255,255,0.015) 1px,
+            transparent 1px,
+            transparent 3px
+        );
+        z-index: 9999;
+        mix-blend-mode: overlay;
+    }
+    /* Виньетка */
+    body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+        z-index: 9998;
     }
 
     #app {
         width: 100%;
-        max-width: 860px;
+        max-width: 900px;
         display: flex;
         flex-direction: column;
         gap: 18px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ---------- Пиксельная рамка (утилита) ---------- */
+    .px-frame {
+        box-shadow:
+            0 calc(var(--px) * -1) 0 0 var(--border),
+            0 var(--px) 0 0 var(--border),
+            calc(var(--px) * -1) 0 0 0 var(--border),
+            var(--px) 0 0 0 var(--border);
     }
 
     /* ---------- Верхняя панель шагов ---------- */
     .steps-bar {
         display: flex;
         justify-content: center;
-        gap: 6px;
+        gap: 8px;
         flex-wrap: wrap;
         padding: 4px;
     }
     .step-pip {
         font-size: 10px;
-        letter-spacing: 1.5px;
-        padding: 5px 12px;
-        border: 1px solid #2a2a2a;
+        letter-spacing: 2px;
+        padding: 6px 14px;
         color: #444;
         text-transform: uppercase;
         transition: all 0.15s;
         white-space: nowrap;
+        background: #0a0a0a;
+        box-shadow:
+            0 -2px 0 0 #222,
+            0 2px 0 0 #222,
+            -2px 0 0 0 #222,
+            2px 0 0 0 #222;
     }
     .step-pip.done {
-        border-color: var(--accent-dim);
         color: var(--accent-dim);
+        box-shadow:
+            0 -2px 0 0 var(--accent-dim),
+            0 2px 0 0 var(--accent-dim),
+            -2px 0 0 0 var(--accent-dim),
+            2px 0 0 0 var(--accent-dim);
     }
     .step-pip.current {
-        border-color: var(--accent);
         color: var(--accent);
-        box-shadow: 0 0 14px rgba(255,255,0,0.35);
-        text-shadow: 0 0 8px rgba(255,255,0,0.5);
+        text-shadow: 0 0 10px rgba(255,255,0,0.7);
+        box-shadow:
+            0 -2px 0 0 var(--accent),
+            0 2px 0 0 var(--accent),
+            -2px 0 0 0 var(--accent),
+            2px 0 0 0 var(--accent),
+            0 0 20px rgba(255,255,0,0.25);
     }
 
     /* ---------- Основная рамка-экран ---------- */
     .screen {
-        border: 2px solid var(--border);
-        background: var(--panel);
-        padding: 28px 30px;
+        background:
+            linear-gradient(180deg, rgba(255,255,255,0.02), transparent 30%),
+            var(--panel);
+        padding: 30px 32px;
         display: none;
         flex-direction: column;
-        gap: 20px;
+        gap: 22px;
         position: relative;
-        min-height: 440px;
-        box-shadow: 0 0 0 1px #000, 0 0 40px rgba(255,255,255,0.03) inset;
+        min-height: 460px;
+        box-shadow:
+            0 -3px 0 0 var(--border),
+            0 3px 0 0 var(--border),
+            -3px 0 0 0 var(--border),
+            3px 0 0 0 var(--border),
+            0 0 60px rgba(255,255,255,0.03) inset;
     }
-    .screen.active { display: flex; animation: fadeIn 0.2s ease; }
+    .screen.active { display: flex; animation: fadeIn 0.22s ease; }
 
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(4px); }
+        from { opacity: 0; transform: translateY(6px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
     .screen-title {
-        font-size: 16px;
-        letter-spacing: 4px;
+        font-size: 17px;
+        letter-spacing: 6px;
         text-transform: uppercase;
         color: var(--accent);
         text-align: center;
-        border-bottom: 1px solid #2a2a2a;
-        padding-bottom: 12px;
-        text-shadow: 0 0 10px rgba(255,255,0,0.4);
+        padding-bottom: 14px;
+        text-shadow: 0 0 14px rgba(255,255,0,0.55), 0 2px 0 rgba(0,0,0,0.8);
+        position: relative;
+    }
+    .screen-title::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 70%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #333, transparent);
     }
     .screen-sub {
         font-size: 12px;
         color: var(--dim);
         text-align: center;
-        letter-spacing: 1px;
-        margin-top: -8px;
+        letter-spacing: 1.5px;
+        margin-top: -10px;
         line-height: 1.5;
     }
 
-    /* ---------- Список опций (стиль Undertale) ---------- */
+    /* ---------- Список опций ---------- */
     .option-list {
         display: flex;
         flex-direction: column;
         gap: 8px;
-        max-width: 580px;
+        max-width: 600px;
         margin: 0 auto;
         width: 100%;
     }
@@ -122,7 +195,6 @@
         align-items: flex-start;
         gap: 14px;
         padding: 12px 16px;
-        border: 2px solid transparent;
         cursor: pointer;
         transition: all 0.1s;
         background: transparent;
@@ -132,15 +204,29 @@
         font-size: 14px;
         line-height: 1.45;
         width: 100%;
+        position: relative;
+        box-shadow:
+            0 -2px 0 0 transparent,
+            0 2px 0 0 transparent,
+            -2px 0 0 0 transparent,
+            2px 0 0 0 transparent;
     }
     .option:hover {
-        border-color: #444;
-        background: rgba(255,255,255,0.02);
+        background: rgba(255,255,255,0.025);
+        box-shadow:
+            0 -2px 0 0 #444,
+            0 2px 0 0 #444,
+            -2px 0 0 0 #444,
+            2px 0 0 0 #444;
     }
     .option.selected {
-        border-color: var(--accent);
         background: rgba(255,255,0,0.06);
-        box-shadow: 0 0 20px rgba(255,255,0,0.1) inset;
+        box-shadow:
+            0 -2px 0 0 var(--accent),
+            0 2px 0 0 var(--accent),
+            -2px 0 0 0 var(--accent),
+            2px 0 0 0 var(--accent),
+            0 0 20px rgba(255,255,0,0.12) inset;
     }
     .option .heart {
         color: var(--heart);
@@ -150,8 +236,8 @@
         width: 20px;
         text-align: center;
         opacity: 0;
-        transition: opacity 0.1s, transform 0.1s;
-        text-shadow: 0 0 8px rgba(255,255,0,0.6);
+        transition: opacity 0.1s;
+        text-shadow: 0 0 8px rgba(255,255,0,0.7);
     }
     .option.selected .heart {
         opacity: 1;
@@ -159,100 +245,333 @@
     }
     @keyframes heartBeat {
         0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.15); }
+        50% { transform: scale(1.18); }
     }
     .option .opt-body { display: flex; flex-direction: column; gap: 4px; }
     .option .opt-name { font-weight: bold; letter-spacing: 1px; font-size: 14px; }
     .option .opt-desc { font-size: 12px; color: #999; line-height: 1.4; }
 
-    /* ---------- Сетка ролей ---------- */
-    .roles-grid {
+    /* ============================================================
+       ЭКРАН РОЛИ — новая раскладка
+       ============================================================ */
+    #step-role {
+        padding: 26px 26px 22px;
+    }
+    .role-layout {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 12px;
+        grid-template-columns: 300px 1fr;
+        gap: 18px;
+        flex: 1;
+        min-height: 0;
     }
-    .role-card {
-        border: 2px solid #2a2a2a;
-        background: #070707;
-        padding: 14px;
-        cursor: pointer;
+    @media (max-width: 720px) {
+        .role-layout { grid-template-columns: 1fr; }
+    }
+
+    /* --- Левая колонка: список ролей --- */
+    .role-list {
         display: flex;
-        gap: 12px;
-        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+        overflow-y: auto;
+        padding: 4px 4px 4px 0;
+        max-height: 420px;
+        scrollbar-width: thin;
+        scrollbar-color: #333 transparent;
+    }
+    .role-list::-webkit-scrollbar { width: 6px; }
+    .role-list::-webkit-scrollbar-thumb { background: #333; }
+
+    .role-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        cursor: pointer;
+        background: #080808;
+        color: var(--fg);
+        font-family: inherit;
+        font-size: 12.5px;
+        text-align: left;
+        width: 100%;
         transition: all 0.12s;
-        position: relative;
-        min-height: 110px;
+        box-shadow:
+            0 -2px 0 0 #1e1e1e,
+            0 2px 0 0 #1e1e1e,
+            -2px 0 0 0 #1e1e1e,
+            2px 0 0 0 #1e1e1e;
     }
-    .role-card:hover { border-color: #666; background: #0d0d0d; }
-    .role-card.selected {
-        border-color: var(--accent);
+    .role-item:hover {
+        background: #0d0d0d;
+        box-shadow:
+            0 -2px 0 0 #444,
+            0 2px 0 0 #444,
+            -2px 0 0 0 #444,
+            2px 0 0 0 #444;
+    }
+    .role-item.active {
         background: rgba(255,255,0,0.06);
-        box-shadow: 0 0 20px rgba(255,255,0,0.15);
+        box-shadow:
+            0 -2px 0 0 var(--accent),
+            0 2px 0 0 var(--accent),
+            -2px 0 0 0 var(--accent),
+            2px 0 0 0 var(--accent),
+            0 0 20px rgba(255,255,0,0.12);
     }
-    .role-card.disabled {
-        opacity: 0.2;
+    .role-item.disabled {
+        opacity: 0.18;
         cursor: not-allowed;
         filter: grayscale(1);
     }
-    .role-card .heart-badge {
-        position: absolute;
-        top: 8px;
-        right: 10px;
-        color: var(--heart);
-        font-size: 14px;
-        opacity: 0;
-        text-shadow: 0 0 8px rgba(255,255,0,0.6);
+    .role-item .ri-icon {
+        width: 26px;
+        height: 26px;
+        flex-shrink: 0;
+        image-rendering: pixelated;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px #000, 0 0 0 3px #333;
     }
-    .role-card.selected .heart-badge {
+    .role-item.active .ri-icon {
+        box-shadow: 0 0 0 2px #000, 0 0 0 3px var(--accent);
+    }
+    .role-item .ri-name {
+        font-weight: bold;
+        letter-spacing: 0.5px;
+        line-height: 1.25;
+    }
+    .role-item .ri-heart {
+        margin-left: auto;
+        color: var(--heart);
+        opacity: 0;
+        font-size: 13px;
+        text-shadow: 0 0 6px rgba(255,255,0,0.6);
+    }
+    .role-item.active .ri-heart {
         opacity: 1;
         animation: heartBeat 0.8s infinite;
     }
 
-    .role-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        flex-shrink: 0;
-        border: 2px solid #fff;
-        box-shadow: 0 0 12px rgba(255,255,255,0.15);
-    }
-    .role-info { display: flex; flex-direction: column; gap: 4px; padding-right: 14px; }
-    .role-name { font-size: 13px; font-weight: bold; letter-spacing: 0.5px; line-height: 1.3; }
-    .role-desc { font-size: 11px; color: #999; line-height: 1.4; }
-
-    /* ---------- Возраст ---------- */
-    .age-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 10px;
-        max-width: 680px;
-        margin: 0 auto;
-        width: 100%;
-    }
-    .age-btn {
-        background: transparent;
-        border: 2px solid #2a2a2a;
-        color: var(--fg);
-        font-family: inherit;
-        padding: 16px 10px;
-        cursor: pointer;
+    /* --- Правая колонка: портрет + детали --- */
+    .role-detail {
+        background:
+            linear-gradient(180deg, rgba(255,255,255,0.03), transparent 40%),
+            #090909;
+        padding: 20px 22px;
         display: flex;
         flex-direction: column;
-        gap: 5px;
+        gap: 16px;
+        min-height: 420px;
+        position: relative;
+        box-shadow:
+            0 -3px 0 0 #2a2a2a,
+            0 3px 0 0 #2a2a2a,
+            -3px 0 0 0 #2a2a2a,
+            3px 0 0 0 #2a2a2a;
+    }
+    .role-detail::before {
+        content: '';
+        position: absolute;
+        inset: 6px;
+        border: 1px solid rgba(255,255,255,0.04);
+        pointer-events: none;
+    }
+
+    .rd-header {
+        display: flex;
         align-items: center;
-        transition: all 0.12s;
+        gap: 18px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #1f1f1f;
+    }
+    .rd-portrait {
+        width: 110px;
+        height: 110px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        position: relative;
+        box-shadow:
+            0 0 0 3px #000,
+            0 0 0 5px var(--accent),
+            0 0 30px rgba(255,255,0,0.3);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    .rd-portrait::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at 32% 30%, rgba(255,255,255,0.45), transparent 45%),
+            radial-gradient(circle at 50% 55%, rgba(0,0,0,0.4), transparent 70%);
+        mix-blend-mode: overlay;
+        pointer-events: none;
+    }
+    .rd-portrait.bump {
+        animation: bump 0.35s ease;
+    }
+    @keyframes bump {
+        0% { transform: scale(0.85); opacity: 0.5; }
+        60% { transform: scale(1.06); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    .rd-titles {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+    .rd-role-name {
+        font-size: 16px;
+        font-weight: bold;
+        letter-spacing: 1.5px;
+        color: var(--accent);
+        text-shadow: 0 0 10px rgba(255,255,0,0.4);
+        line-height: 1.3;
+    }
+    .rd-role-tag {
+        font-size: 11px;
+        color: #888;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+    .rd-role-desc {
+        font-size: 12.5px;
+        color: #bbb;
+        line-height: 1.6;
+        padding: 4px 0;
+    }
+
+    /* --- Статы в виде пиксельных полосок --- */
+    .rd-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-top: 4px;
+        border-top: 1px solid #1a1a1a;
+        padding-top: 14px;
+    }
+    .stat-row {
+        display: grid;
+        grid-template-columns: 90px 1fr 34px;
+        align-items: center;
+        gap: 10px;
+        font-size: 11px;
+        letter-spacing: 1px;
+    }
+    .stat-row .stat-label {
+        color: #888;
+        text-transform: uppercase;
+        font-size: 10px;
+    }
+    .stat-row .stat-bar {
+        display: flex;
+        gap: 3px;
+        height: 12px;
+    }
+    .stat-row .stat-pip {
+        flex: 1;
+        background: #1a1a1a;
+        box-shadow: 0 0 0 1px #000;
+    }
+    .stat-row .stat-pip.on {
+        background: var(--accent);
+        box-shadow: 0 0 0 1px #000, 0 0 8px rgba(255,255,0,0.5);
+    }
+    .stat-row .stat-value {
+        color: #aaa;
+        text-align: right;
+        font-size: 11px;
+    }
+
+    /* --- Подсказка «нет выбора» --- */
+    .rd-empty {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         text-align: center;
+        color: #555;
+        font-size: 12px;
+        letter-spacing: 1.5px;
+        line-height: 1.8;
+        padding: 20px;
     }
-    .age-btn:hover { border-color: #666; background: #0d0d0d; }
-    .age-btn.selected {
-        border-color: var(--accent);
-        background: rgba(255,255,0,0.06);
-        box-shadow: 0 0 18px rgba(255,255,0,0.15);
+    .rd-empty .big-heart {
+        display: block;
+        font-size: 36px;
+        color: #333;
+        margin-bottom: 12px;
+        animation: heartBeat 1.6s infinite;
     }
-    .age-btn .age-label { font-size: 15px; font-weight: bold; letter-spacing: 1px; }
-    .age-btn .age-range { font-size: 11px; color: #888; }
-    .age-btn .age-hint { font-size: 10px; color: #666; margin-top: 3px; line-height: 1.3; }
-    .age-btn.selected .age-label { color: var(--accent); text-shadow: 0 0 8px rgba(255,255,0,0.5); }
+
+    /* --- Кнопки навигации --- */
+    .nav-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: auto;
+        padding-top: 16px;
+        border-top: 1px solid #1a1a1a;
+    }
+    .nav-btn {
+        background: transparent;
+        font-family: inherit;
+        font-size: 13px;
+        padding: 12px 28px;
+        cursor: pointer;
+        letter-spacing: 3px;
+        transition: all 0.12s;
+        text-transform: uppercase;
+    }
+    .nav-btn.back {
+        color: #aaa;
+        box-shadow:
+            0 -2px 0 0 #555,
+            0 2px 0 0 #555,
+            -2px 0 0 0 #555,
+            2px 0 0 0 #555;
+    }
+    .nav-btn.back:hover {
+        color: var(--fg);
+        box-shadow:
+            0 -2px 0 0 var(--fg),
+            0 2px 0 0 var(--fg),
+            -2px 0 0 0 var(--fg),
+            2px 0 0 0 var(--fg);
+    }
+    .nav-btn.next {
+        color: var(--accent);
+        box-shadow:
+            0 -2px 0 0 var(--accent),
+            0 2px 0 0 var(--accent),
+            -2px 0 0 0 var(--accent),
+            2px 0 0 0 var(--accent);
+        margin-left: auto;
+    }
+    .nav-btn.next:hover:not(:disabled) {
+        background: var(--accent);
+        color: #000;
+        box-shadow:
+            0 -2px 0 0 var(--accent),
+            0 2px 0 0 var(--accent),
+            -2px 0 0 0 var(--accent),
+            2px 0 0 0 var(--accent),
+            0 0 24px rgba(255,255,0,0.5);
+    }
+    .nav-btn:disabled {
+        opacity: 0.18;
+        cursor: not-allowed;
+        color: #444;
+        box-shadow:
+            0 -2px 0 0 #333,
+            0 2px 0 0 #333,
+            -2px 0 0 0 #333,
+            2px 0 0 0 #333;
+    }
 
     /* ---------- Обзор ---------- */
     .review-box {
@@ -267,9 +586,22 @@
         width: 130px;
         height: 130px;
         border-radius: 50%;
-        border: 3px solid var(--accent);
-        box-shadow: 0 0 36px rgba(255,255,0,0.35);
         flex-shrink: 0;
+        box-shadow:
+            0 0 0 3px #000,
+            0 0 0 5px var(--accent),
+            0 0 36px rgba(255,255,0,0.35);
+        position: relative;
+        overflow: hidden;
+    }
+    .review-avatar::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at 32% 30%, rgba(255,255,255,0.45), transparent 45%),
+            radial-gradient(circle at 50% 55%, rgba(0,0,0,0.4), transparent 70%);
+        mix-blend-mode: overlay;
     }
     .review-details {
         display: flex;
@@ -277,7 +609,7 @@
         gap: 8px;
         min-width: 260px;
         flex: 1;
-        max-width: 360px;
+        max-width: 380px;
     }
     .review-row {
         display: flex;
@@ -290,48 +622,59 @@
     .review-row .label { color: #888; letter-spacing: 1px; flex-shrink: 0; }
     .review-row .value { color: var(--fg); text-align: right; font-weight: bold; }
 
-    /* ---------- Нижняя панель кнопок ---------- */
-    .nav-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        margin-top: auto;
-        padding-top: 16px;
-        border-top: 1px solid #1a1a1a;
+    /* ---------- Возраст ---------- */
+    .age-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 10px;
+        max-width: 700px;
+        margin: 0 auto;
+        width: 100%;
     }
-    .nav-btn {
-        background: transparent;
+    .age-btn {
+        background: #080808;
+        color: var(--fg);
         font-family: inherit;
-        font-size: 14px;
-        padding: 12px 28px;
+        padding: 16px 10px;
         cursor: pointer;
-        letter-spacing: 3px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        align-items: center;
         transition: all 0.12s;
-        text-transform: uppercase;
+        text-align: center;
+        box-shadow:
+            0 -2px 0 0 #1e1e1e,
+            0 2px 0 0 #1e1e1e,
+            -2px 0 0 0 #1e1e1e,
+            2px 0 0 0 #1e1e1e;
     }
-    .nav-btn.back {
-        border: 2px solid #555;
-        color: #aaa;
+    .age-btn:hover {
+        background: #0d0d0d;
+        box-shadow:
+            0 -2px 0 0 #444,
+            0 2px 0 0 #444,
+            -2px 0 0 0 #444,
+            2px 0 0 0 #444;
     }
-    .nav-btn.back:hover { border-color: var(--fg); color: var(--fg); }
-    .nav-btn.next {
-        border: 2px solid var(--accent);
+    .age-btn.selected {
+        background: rgba(255,255,0,0.06);
+        box-shadow:
+            0 -2px 0 0 var(--accent),
+            0 2px 0 0 var(--accent),
+            -2px 0 0 0 var(--accent),
+            2px 0 0 0 var(--accent),
+            0 0 18px rgba(255,255,0,0.15);
+    }
+    .age-btn .age-label { font-size: 15px; font-weight: bold; letter-spacing: 1px; }
+    .age-btn .age-range { font-size: 11px; color: #888; }
+    .age-btn .age-hint { font-size: 10px; color: #666; margin-top: 3px; line-height: 1.3; }
+    .age-btn.selected .age-label {
         color: var(--accent);
-        margin-left: auto;
-    }
-    .nav-btn.next:hover:not(:disabled) {
-        background: var(--accent);
-        color: #000;
-        box-shadow: 0 0 24px rgba(255,255,0,0.45);
-    }
-    .nav-btn:disabled {
-        opacity: 0.2;
-        cursor: not-allowed;
-        border-color: #333;
-        color: #333;
+        text-shadow: 0 0 8px rgba(255,255,0,0.5);
     }
 
-    /* ---------- Финальный экран ---------- */
+    /* ---------- Игровой экран ---------- */
     #game-screen {
         display: none;
         flex-direction: column;
@@ -343,26 +686,33 @@
     .placeholder-note {
         font-size: 12px;
         color: #777;
-        border: 1px dashed #333;
         padding: 16px 22px;
         max-width: 520px;
         line-height: 1.7;
         background: rgba(255,255,255,0.01);
+        box-shadow:
+            0 0 0 1px #222,
+            0 0 0 3px #000,
+            0 0 0 4px #222;
     }
     .placeholder-note strong { color: var(--accent-dim); }
 
     /* ---------- Мобильная адаптация ---------- */
-    @media (max-width: 560px) {
+    @media (max-width: 640px) {
         body { padding: 12px 8px; }
         .screen { padding: 22px 16px; min-height: 400px; }
-        .screen-title { font-size: 14px; letter-spacing: 2px; }
+        .screen-title { font-size: 14px; letter-spacing: 3px; }
         .option { padding: 10px 12px; font-size: 13px; }
-        .roles-grid { grid-template-columns: 1fr; }
         .nav-btn { padding: 11px 18px; font-size: 12px; letter-spacing: 2px; }
         .review-avatar { width: 100px; height: 100px; }
         .review-details { min-width: 0; width: 100%; }
         .age-grid { grid-template-columns: 1fr 1fr; }
-        .step-pip { font-size: 9px; padding: 4px 8px; }
+        .step-pip { font-size: 9px; padding: 5px 9px; }
+        #step-role { padding: 18px 14px 16px; }
+        .role-detail { min-height: 320px; padding: 16px; }
+        .rd-portrait { width: 80px; height: 80px; }
+        .rd-role-name { font-size: 14px; }
+        .stat-row { grid-template-columns: 70px 1fr 30px; font-size: 10px; }
     }
 </style>
 </head>
@@ -394,11 +744,14 @@
         </div>
     </div>
 
-    <!-- ШАГ 3: РОЛЬ -->
+    <!-- ШАГ 3: РОЛЬ — НОВАЯ РАЗМЕТКА -->
     <div class="screen" id="step-role">
         <div class="screen-title">Роль</div>
         <div class="screen-sub">Ваше место в войне людей и монстров</div>
-        <div class="roles-grid" id="roles-grid"></div>
+        <div class="role-layout">
+            <div class="role-list" id="roles-list"></div>
+            <div class="role-detail" id="role-detail"></div>
+        </div>
         <div class="nav-row">
             <button class="nav-btn back" id="back-role">← Назад</button>
             <button class="nav-btn next" id="next-role" disabled>Далее →</button>
@@ -481,24 +834,25 @@ const GENDERS = [
     { id: 'female', name: 'Женский', desc: 'Женские роли: королева-стратег, дипломат, теневая мать, мятежная воительница.' }
 ];
 
+/* Роли теперь имеют статы (0..5) и короткий тег */
 const ROLES = [
     // Мужские
-    { id: 'asgore_proto', name: 'Главнокомандующий / Хранитель Очага', desc: 'Берёт на себя тяжесть военных решений. Огненная магия, попытки дипломатии. Радикалы считают его слишком мягким.', gender: 'male', c1: '#ff6b35', c2: '#aa2200' },
-    { id: 'prince_avant', name: 'Принц-Авангардист', desc: 'Молодой наследник рвётся в бой. Опасные вылазки на территории людей. Риск погибнуть, но колоссальный авторитет у генералов.', gender: 'male', c1: '#ffcc00', c2: '#aa6600' },
-    { id: 'exile_general', name: 'Опальный Генерал / Изгнанник', desc: 'Не согласен с пассивной политикой короля. Собирает радикалов для партизанской войны и будущего переворота.', gender: 'male', c1: '#8844ff', c2: '#331188' },
-    { id: 'border_knight', name: 'Рыцарь-Защитник Окраин', desc: 'Правит приграничьем, принимающим первый удар. Держит оборону минимальными ресурсами. Выстоит — авторитет превысит королевский.', gender: 'male', c1: '#33aa77', c2: '#115533' },
+    { id: 'asgore_proto',    name: 'Главнокомандующий / Хранитель Очага', short: 'Хранитель Очага', tag: 'МУЖ · КОМАНДИР', desc: 'Берёт на себя тяжесть военных решений. Огненная магия, попытки дипломатии. Радикалы считают его слишком мягким.', gender: 'male',   c1: '#ff6b35', c2: '#aa2200', stats: { Сила: 3, Магия: 5, Харизма: 4, Защита: 2 } },
+    { id: 'prince_avant',    name: 'Принц-Авангардист',                    short: 'Принц-Авангардист', tag: 'МУЖ · НАСЛЕДНИК', desc: 'Молодой наследник рвётся в бой. Опасные вылазки на территории людей. Риск погибнуть, но колоссальный авторитет у генералов.', gender: 'male',   c1: '#ffcc00', c2: '#aa6600', stats: { Сила: 5, Магия: 3, Харизма: 5, Защита: 2 } },
+    { id: 'exile_general',   name: 'Опальный Генерал / Изгнанник',        short: 'Опальный Генерал', tag: 'МУЖ · РАДИКАЛ', desc: 'Не согласен с пассивной политикой короля. Собирает радикалов для партизанской войны и будущего переворота.', gender: 'male',   c1: '#8844ff', c2: '#331188', stats: { Сила: 5, Магия: 2, Харизма: 3, Защита: 4 } },
+    { id: 'border_knight',   name: 'Рыцарь-Защитник Окраин',               short: 'Рыцарь Окраин', tag: 'МУЖ · ЗАЩИТНИК', desc: 'Правит приграничьем, принимающим первый удар. Держит оборону минимальными ресурсами. Выстоит — авторитет превысит королевский.', gender: 'male',   c1: '#33aa77', c2: '#115533', stats: { Сила: 3, Магия: 2, Харизма: 3, Защита: 5 } },
     // Женские
-    { id: 'queen_strategist', name: 'Королева-Стратег / Верховный Судья', desc: 'Управляет внутренней политикой и логистикой. Распределяет ресурсы, следит за безопасностью, руководит магической защитой столицы. Вето в совете.', gender: 'female', c1: '#ff66aa', c2: '#991155' },
-    { id: 'chief_diplomat', name: 'Главный Дипломат / Хранительница Знаний', desc: 'Пытается вести переговоры с человеческими магами. Сильная исцеляющая магия, собирает артефакты для выживания в изоляции.', gender: 'female', c1: '#33ccff', c2: '#116699' },
-    { id: 'shadow_mother', name: 'Глава Тайной Канцелярии / «Теневая» Мать', desc: 'Плетёт интриги при дворе. Шпионаж, устранение конкурентов, продвижение своих детей к престолу, пока законные наследники гибнут на фронте.', gender: 'female', c1: '#777777', c2: '#222222' },
-    { id: 'rebel_warrior', name: 'Мятежная Воительница / Лидер Подполья', desc: 'Отринула дворцовый этикет. Лично ведёт элитные отряды в бой. Цель — доказать, что король слаб, и занять его место по праву силы.', gender: 'female', c1: '#ff3355', c2: '#881122' }
+    { id: 'queen_strategist',name: 'Королева-Стратег / Верховный Судья',   short: 'Королева-Стратег', tag: 'ЖЕН · СТРАТЕГ', desc: 'Управляет внутренней политикой и логистикой. Распределяет ресурсы, следит за безопасностью, руководит магической защитой столицы. Вето в совете.', gender: 'female', c1: '#ff66aa', c2: '#991155', stats: { Сила: 2, Магия: 4, Харизма: 5, Защита: 4 } },
+    { id: 'chief_diplomat',  name: 'Главный Дипломат / Хранительница Знаний', short: 'Главный Дипломат', tag: 'ЖЕН · ДИПЛОМАТ', desc: 'Пытается вести переговоры с человеческими магами. Сильная исцеляющая магия, собирает артефакты для выживания в изоляции.', gender: 'female', c1: '#33ccff', c2: '#116699', stats: { Сила: 1, Магия: 5, Харизма: 5, Защита: 3 } },
+    { id: 'shadow_mother',   name: 'Глава Тайной Канцелярии / «Теневая» Мать', short: 'Теневая Мать', tag: 'ЖЕН · ИНТРИГАН', desc: 'Плетёт интриги при дворе. Шпионаж, устранение конкурентов, продвижение своих детей к престолу, пока законные наследники гибнут на фронте.', gender: 'female', c1: '#777777', c2: '#222222', stats: { Сила: 2, Магия: 3, Харизма: 5, Защита: 3 } },
+    { id: 'rebel_warrior',   name: 'Мятежная Воительница / Лидер Подполья', short: 'Мятежная Воительница', tag: 'ЖЕН · ВОИН', desc: 'Отринула дворцовый этикет. Лично ведёт элитные отряды в бой. Цель — доказать, что король слаб, и занять его место по праву силы.', gender: 'female', c1: '#ff3355', c2: '#881122', stats: { Сила: 5, Магия: 2, Харизма: 4, Защита: 3 } }
 ];
 
 const AGES = [
-    { id: 'young', label: 'Юный', range: '16–25 лет', desc: 'Горячность и максимализм. Мало опыта, но много энергии.' },
-    { id: 'adult', label: 'Зрелый', range: '26–40 лет', desc: 'Расцвет сил. Опыт уже есть, силы ещё не иссякли.' },
-    { id: 'veteran', label: 'Ветеран', range: '41–60 лет', desc: 'Мудрость и связи. Тело слабее, но слово весит больше.' },
-    { id: 'elder', label: 'Старейшина', range: '61+ лет', desc: 'Живая легенда. Вас слушают, но время безжалостно.' }
+    { id: 'young',   label: 'Юный',        range: '16–25 лет', desc: 'Горячность и максимализм. Мало опыта, но много энергии.' },
+    { id: 'adult',   label: 'Зрелый',      range: '26–40 лет', desc: 'Расцвет сил. Опыт уже есть, силы ещё не иссякли.' },
+    { id: 'veteran', label: 'Ветеран',     range: '41–60 лет', desc: 'Мудрость и связи. Тело слабее, но слово весит больше.' },
+    { id: 'elder',   label: 'Старейшина',  range: '61+ лет',   desc: 'Живая легенда. Вас слушают, но время безжалостно.' }
 ];
 
 /* ============================================================
@@ -517,24 +871,25 @@ let currentStep = 'origin';
 /* ============================================================
    DOM
    ============================================================ */
-const stepsBar = document.getElementById('steps-bar');
-const originList = document.getElementById('origin-list');
-const genderList = document.getElementById('gender-list');
-const rolesGrid = document.getElementById('roles-grid');
-const ageGrid = document.getElementById('age-grid');
+const stepsBar     = document.getElementById('steps-bar');
+const originList   = document.getElementById('origin-list');
+const genderList   = document.getElementById('gender-list');
+const rolesList    = document.getElementById('roles-list');
+const roleDetail   = document.getElementById('role-detail');
+const ageGrid      = document.getElementById('age-grid');
 
-const nextOrigin = document.getElementById('next-origin');
-const nextGender = document.getElementById('next-gender');
-const nextRole = document.getElementById('next-role');
-const nextAge = document.getElementById('next-age');
+const nextOrigin   = document.getElementById('next-origin');
+const nextGender   = document.getElementById('next-gender');
+const nextRole     = document.getElementById('next-role');
+const nextAge      = document.getElementById('next-age');
 
 const screens = {
     origin: document.getElementById('step-origin'),
     gender: document.getElementById('step-gender'),
-    role: document.getElementById('step-role'),
-    age: document.getElementById('step-age'),
+    role:   document.getElementById('step-role'),
+    age:    document.getElementById('step-age'),
     review: document.getElementById('step-review'),
-    game: document.getElementById('game-screen')
+    game:   document.getElementById('game-screen')
 };
 
 /* ============================================================
@@ -543,8 +898,8 @@ const screens = {
 const STEP_LABELS = {
     origin: 'Происхождение',
     gender: 'Пол',
-    role: 'Роль',
-    age: 'Возраст',
+    role:   'Роль',
+    age:    'Возраст',
     review: 'Обзор'
 };
 
@@ -621,7 +976,6 @@ function renderGenders() {
         `;
         btn.addEventListener('click', () => {
             state.gender = g.id;
-            // сброс роли, если не подходит под пол
             if (state.role) {
                 const r = ROLES.find(x => x.id === state.role);
                 if (r && r.gender !== g.id) state.role = null;
@@ -640,50 +994,112 @@ document.getElementById('back-gender').addEventListener('click', () => goTo('ori
 nextGender.addEventListener('click', () => goTo('role'));
 
 /* ============================================================
-   ШАГ 3: РОЛЬ
+   ШАГ 3: РОЛЬ — двухпанельный интерфейс
    ============================================================ */
-function renderRoles() {
-    rolesGrid.innerHTML = '';
+
+/* Иконка роли — пиксельный силуэт из radial-gradient */
+function roleIconStyle(r) {
+    return `
+        background:
+            radial-gradient(circle at 50% 42%, ${r.c1} 0%, ${r.c1} 28%, transparent 30%),
+            radial-gradient(circle at 50% 78%, ${r.c2} 0%, ${r.c2} 34%, transparent 36%),
+            #050505;
+    `;
+}
+
+function renderRoleList() {
+    rolesList.innerHTML = '';
     ROLES.forEach(r => {
-        const card = document.createElement('div');
-        card.className = 'role-card';
-        card.dataset.roleId = r.id;
-
-        const avatar = document.createElement('div');
-        avatar.className = 'role-avatar';
-        avatar.style.background = `radial-gradient(circle at 30% 30%, ${r.c1}, ${r.c2})`;
-
-        const info = document.createElement('div');
-        info.className = 'role-info';
-        info.innerHTML = `<div class="role-name">${r.name}</div><div class="role-desc">${r.desc}</div>`;
-
-        const heart = document.createElement('div');
-        heart.className = 'heart-badge';
-        heart.textContent = '♥';
-
-        card.appendChild(avatar);
-        card.appendChild(info);
-        card.appendChild(heart);
-
-        card.addEventListener('click', () => {
-            if (card.classList.contains('disabled')) return;
-            state.role = r.id;
-            document.querySelectorAll('.role-card').forEach(el => el.classList.remove('selected'));
-            card.classList.add('selected');
-            updateRoleNextButton();
-        });
-
-        rolesGrid.appendChild(card);
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'role-item';
+        item.dataset.roleId = r.id;
+        item.innerHTML = `
+            <span class="ri-icon" style="${roleIconStyle(r)}"></span>
+            <span class="ri-name">${r.short}</span>
+            <span class="ri-heart">♥</span>
+        `;
+        item.addEventListener('click', () => selectRole(r.id));
+        rolesList.appendChild(item);
     });
 }
 
-function updateRoleAvailability() {
-    document.querySelectorAll('.role-card').forEach(card => {
-        const r = ROLES.find(x => x.id === card.dataset.roleId);
-        const matches = !state.gender || r.gender === state.gender;
-        card.classList.toggle('disabled', !matches);
-        card.classList.toggle('selected', matches && r.id === state.role);
+function renderRoleDetailEmpty() {
+    roleDetail.innerHTML = `
+        <div class="rd-empty">
+            <span class="big-heart">♥</span>
+            Выберите роль из списка слева,<br>чтобы увидеть подробности.
+        </div>
+    `;
+}
+
+function renderRoleDetail(r) {
+    const statKeys = Object.keys(r.stats);
+    const statsHtml = statKeys.map(key => {
+        const val = r.stats[key];
+        const pips = Array.from({ length: 5 }, (_, i) =>
+            `<span class="stat-pip ${i < val ? 'on' : ''}"></span>`
+        ).join('');
+        return `
+            <div class="stat-row">
+                <span class="stat-label">${key}</span>
+                <span class="stat-bar">${pips}</span>
+                <span class="stat-value">${val}/5</span>
+            </div>
+        `;
+    }).join('');
+
+    roleDetail.innerHTML = `
+        <div class="rd-header">
+            <div class="rd-portrait bump" style="background:
+                radial-gradient(circle at 32% 30%, ${r.c1}, ${r.c2} 70%, #000);
+            "></div>
+            <div class="rd-titles">
+                <div class="rd-role-name">${r.name}</div>
+                <div class="rd-role-tag">${r.tag}</div>
+            </div>
+        </div>
+        <div class="rd-role-desc">${r.desc}</div>
+        <div class="rd-stats">${statsHtml}</div>
+    `;
+}
+
+function selectRole(roleId) {
+    const r = ROLES.find(x => x.id === roleId);
+    if (!r) return;
+    // Проверка пола
+    if (state.gender && r.gender !== state.gender) return;
+
+    state.role = roleId;
+
+    // Подсветка в списке
+    document.querySelectorAll('.role-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.roleId === roleId);
     });
+
+    renderRoleDetail(r);
+    updateRoleNextButton();
+}
+
+function updateRoleAvailability() {
+    document.querySelectorAll('.role-item').forEach(item => {
+        const r = ROLES.find(x => x.id === item.dataset.roleId);
+        const matches = !state.gender || r.gender === state.gender;
+        item.classList.toggle('disabled', !matches);
+        item.classList.toggle('active', matches && r.id === state.role);
+    });
+    // Если текущая роль невалидна — сброс
+    if (state.role) {
+        const cur = ROLES.find(x => x.id === state.role);
+        if (!cur || (state.gender && cur.gender !== state.gender)) {
+            state.role = null;
+            renderRoleDetailEmpty();
+        } else {
+            renderRoleDetail(cur);
+        }
+    } else {
+        renderRoleDetailEmpty();
+    }
 }
 
 function updateRoleNextButton() {
@@ -730,16 +1146,16 @@ nextAge.addEventListener('click', () => {
 function renderReview() {
     const origin = ORIGINS.find(o => o.id === state.origin);
     const gender = GENDERS.find(g => g.id === state.gender);
-    const role = ROLES.find(r => r.id === state.role);
-    const age = AGES.find(a => a.id === state.age);
+    const role   = ROLES.find(r => r.id === state.role);
+    const age    = AGES.find(a => a.id === state.age);
 
-    document.getElementById('review-avatar').style.background =
-        `radial-gradient(circle at 30% 30%, ${role.c1}, ${role.c2})`;
+    const av = document.getElementById('review-avatar');
+    av.style.background = `radial-gradient(circle at 32% 30%, ${role.c1}, ${role.c2} 70%, #000)`;
 
     document.getElementById('review-details').innerHTML = `
         <div class="review-row"><span class="label">Происхождение</span><span class="value">${origin.name}</span></div>
         <div class="review-row"><span class="label">Пол</span><span class="value">${gender.name}</span></div>
-        <div class="review-row"><span class="label">Роль</span><span class="value">${role.name}</span></div>
+        <div class="review-row"><span class="label">Роль</span><span class="value">${role.short}</span></div>
         <div class="review-row"><span class="label">Возраст</span><span class="value">${age.label} (${age.range})</span></div>
     `;
 }
@@ -752,16 +1168,16 @@ document.getElementById('back-review').addEventListener('click', () => goTo('age
 document.getElementById('start-game').addEventListener('click', () => {
     const origin = ORIGINS.find(o => o.id === state.origin);
     const gender = GENDERS.find(g => g.id === state.gender);
-    const role = ROLES.find(r => r.id === state.role);
-    const age = AGES.find(a => a.id === state.age);
+    const role   = ROLES.find(r => r.id === state.role);
+    const age    = AGES.find(a => a.id === state.age);
 
-    document.getElementById('game-avatar').style.background =
-        `radial-gradient(circle at 30% 30%, ${role.c1}, ${role.c2})`;
+    const av = document.getElementById('game-avatar');
+    av.style.background = `radial-gradient(circle at 32% 30%, ${role.c1}, ${role.c2} 70%, #000)`;
 
     document.getElementById('game-details').innerHTML = `
         <div class="review-row"><span class="label">Происхождение</span><span class="value">${origin.name}</span></div>
         <div class="review-row"><span class="label">Пол</span><span class="value">${gender.name}</span></div>
-        <div class="review-row"><span class="label">Роль</span><span class="value">${role.name}</span></div>
+        <div class="review-row"><span class="label">Роль</span><span class="value">${role.short}</span></div>
         <div class="review-row"><span class="label">Возраст</span><span class="value">${age.label} (${age.range})</span></div>
     `;
 
@@ -778,14 +1194,17 @@ document.getElementById('start-game').addEventListener('click', () => {
 document.getElementById('restart').addEventListener('click', () => {
     state.origin = state.gender = state.role = state.age = null;
     currentStep = 'origin';
-    // сброс выделений
-    document.querySelectorAll('.option.selected, .role-card.selected, .age-btn.selected')
-        .forEach(el => el.classList.remove('selected'));
+
+    document.querySelectorAll('.option.selected, .role-item.active, .age-btn.selected')
+        .forEach(el => el.classList.remove('selected', 'active'));
+
     nextOrigin.disabled = true;
     nextGender.disabled = true;
     nextRole.disabled = true;
     nextAge.disabled = true;
+
     updateRoleAvailability();
+    renderRoleDetailEmpty();
     goTo('origin');
 });
 
@@ -794,10 +1213,2003 @@ document.getElementById('restart').addEventListener('click', () => {
    ============================================================ */
 renderOrigins();
 renderGenders();
-renderRoles();
+renderRoleList();
+renderRoleDetailEmpty();
 renderAges();
 renderStepsBar();
 goTo('origin');
 </script>
 </body>
 </html>
+<script>
+/* ============================================================
+   ЗВУКОВЫЕ ЭФФЕКТЫ (WebAudio, без файлов)
+   ============================================================ */
+const AudioEngine = (() => {
+    let ctx = null;
+    let enabled = true;
+
+    function getCtx() {
+        if (!ctx) {
+            try {
+                ctx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                enabled = false;
+            }
+        }
+        if (ctx && ctx.state === 'suspended') ctx.resume();
+        return ctx;
+    }
+
+    /* Базовый тон */
+    function tone(freq, dur, type = 'square', vol = 0.06, when = 0) {
+        if (!enabled) return;
+        const c = getCtx();
+        if (!c) return;
+        const t0 = c.currentTime + when;
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, t0);
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+        osc.connect(gain).connect(c.destination);
+        osc.start(t0);
+        osc.stop(t0 + dur + 0.02);
+    }
+
+    /* Скольжение частоты (для "вайпа") */
+    function sweep(f1, f2, dur, type = 'sawtooth', vol = 0.05) {
+        if (!enabled) return;
+        const c = getCtx();
+        if (!c) return;
+        const t0 = c.currentTime;
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(f1, t0);
+        osc.frequency.exponentialRampToValueAtTime(Math.max(20, f2), t0 + dur);
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+        osc.connect(gain).connect(c.destination);
+        osc.start(t0);
+        osc.stop(t0 + dur + 0.02);
+    }
+
+    return {
+        hover()  { tone(520, 0.04, 'square', 0.025); },
+        click()  { tone(660, 0.06, 'square', 0.05); tone(990, 0.05, 'square', 0.035, 0.05); },
+        select() { tone(440, 0.05, 'triangle', 0.05); tone(660, 0.06, 'triangle', 0.05, 0.06); tone(880, 0.08, 'triangle', 0.04, 0.13); },
+        confirm(){ tone(523, 0.08, 'square', 0.06); tone(659, 0.08, 'square', 0.06, 0.08); tone(784, 0.12, 'square', 0.06, 0.16); tone(1046, 0.14, 'square', 0.05, 0.28); },
+        back()   { tone(440, 0.06, 'square', 0.04); tone(330, 0.08, 'square', 0.04, 0.06); },
+        wipe()   { sweep(1200, 120, 0.35, 'sawtooth', 0.03); },
+        disabled(){ tone(180, 0.08, 'sawtooth', 0.03); }
+    };
+})();
+
+/* Глобально вешаем звуки на все клики по интерактивным элементам */
+document.addEventListener('pointerdown', (e) => {
+    const el = e.target.closest('.option, .role-item, .age-btn, .nav-btn');
+    if (!el) return;
+    if (el.disabled || el.classList.contains('disabled')) {
+        AudioEngine.disabled();
+    }
+}, true);
+
+document.addEventListener('click', (e) => {
+    const el = e.target.closest('.option, .role-item, .age-btn, .nav-btn');
+    if (!el) return;
+    if (el.disabled || el.classList.contains('disabled')) return;
+    // выборочно: подтверждение/назад/обычный клик
+    if (el.classList.contains('next') || el.id === 'start-game') {
+        AudioEngine.confirm();
+    } else if (el.classList.contains('back') || el.id === 'restart') {
+        AudioEngine.back();
+    } else {
+        AudioEngine.select();
+    }
+}, true);
+
+document.addEventListener('mouseover', (e) => {
+    const el = e.target.closest('.option, .role-item, .age-btn, .nav-btn');
+    if (!el || el.dataset.hovered === '1') return;
+    el.dataset.hovered = '1';
+    AudioEngine.hover();
+    el.addEventListener('mouseleave', () => { el.dataset.hovered = '0'; }, { once: true });
+});
+
+/* ============================================================
+   ПИКСЕЛЬНЫЙ ВАЙП ПРИ СМЕНЕ ЭКРАНОВ
+   ============================================================ */
+const Wipe = (() => {
+    // создаём оверлей
+    const overlay = document.createElement('div');
+    overlay.id = 'wipe-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        pointer-events: none;
+        background: #000;
+        opacity: 0;
+        transition: opacity 0.18s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    // пиксельная сетка из «кубиков», которые соберутся в чёрный экран
+    const grid = document.createElement('div');
+    grid.style.cssText = `
+        position: absolute;
+        inset: 0;
+        display: grid;
+        grid-template-columns: repeat(16, 1fr);
+        grid-template-rows: repeat(10, 1fr);
+        gap: 0;
+    `;
+    const cells = [];
+    for (let i = 0; i < 160; i++) {
+        const cell = document.createElement('div');
+        cell.style.cssText = `background:#000; opacity:0; transition: opacity 0.06s linear;`;
+        grid.appendChild(cell);
+        cells.push(cell);
+    }
+    overlay.appendChild(grid);
+    document.body.appendChild(overlay);
+
+    let busy = false;
+    function run(callback) {
+        if (busy) { callback(); return; }
+        busy = true;
+        AudioEngine.wipe();
+
+        // 1) заливка пикселями
+        cells.forEach((c, i) => {
+            setTimeout(() => { c.style.opacity = '1'; }, i * 2);
+        });
+        overlay.style.opacity = '1';
+
+        setTimeout(() => {
+            // 2) в середине — меняем экран
+            callback();
+            // 3) рассеивание
+            cells.forEach((c, i) => {
+                setTimeout(() => { c.style.opacity = '0'; }, i * 2);
+            });
+            overlay.style.opacity = '0';
+            setTimeout(() => { busy = false; }, 380);
+        }, 320 + 60);
+    }
+    return { run };
+})();
+
+/* Переопределяем goTo — оборачиваем в вайп */
+const __originalGoTo = goTo;
+goTo = function(step) {
+    if (step === currentStep) return;
+    Wipe.run(() => __originalGoTo(step));
+    // анимация заголовка
+    requestAnimationFrame(() => animateTitleGlitch(step));
+};
+
+/* ============================================================
+   ЭФФЕКТ «ГЛИТЧ» ДЛЯ ЗАГОЛОВКОВ
+   ============================================================ */
+function animateTitleGlitch(step) {
+    const screen = screens[step];
+    if (!screen) return;
+    const title = screen.querySelector('.screen-title');
+    if (!title) return;
+
+    const originalText = title.dataset.orig || title.textContent;
+    title.dataset.orig = originalText;
+
+    const chars = '!<>-_\\/[]{}—=+*^?#________';
+    let iteration = 0;
+    const maxIter = 10;
+    clearInterval(title._glitchTimer);
+    title._glitchTimer = setInterval(() => {
+        title.textContent = originalText
+            .split('')
+            .map((ch, i) => {
+                if (ch === ' ') return ' ';
+                if (i < iteration) return originalText[i];
+                return chars[Math.floor(Math.random() * chars.length)];
+            })
+            .join('');
+        if (iteration >= originalText.length) {
+            clearInterval(title._glitchTimer);
+            title.textContent = originalText;
+        }
+        iteration += 1;
+    }, 30);
+}
+
+/* ============================================================
+   ПОЯВЛЕНИЕ ЭЛЕМЕНТОВ ПРИ ОТКРЫТИИ ШАГА
+   ============================================================ */
+const observer = new MutationObserver(() => {
+    // при смене активного экрана — плавно показываем элементы
+    Object.values(screens).forEach(screen => {
+        if (!screen.classList.contains('active')) return;
+        const elements = screen.querySelectorAll('.option, .role-item, .age-btn, .review-row, .rd-header, .rd-stats');
+        elements.forEach((el, i) => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(8px)';
+            el.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+            setTimeout(() => {
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }, 30 + i * 18);
+        });
+    });
+});
+observer.observe(document.getElementById('app'), { attributes: true, subtree: true, attributeFilter: ['class'] });
+
+/* ============================================================
+   КАСТОМНЫЙ КУРСОР-СЕРДЦЕ (опционально, для «дорогого» вида)
+   ============================================================ */
+(function heartCursor() {
+    const cursor = document.createElement('div');
+    cursor.id = 'heart-cursor';
+    cursor.style.cssText = `
+        position: fixed;
+        width: 18px;
+        height: 18px;
+        pointer-events: none;
+        z-index: 99999;
+        color: #ff0;
+        font-size: 16px;
+        text-align: center;
+        line-height: 18px;
+        text-shadow: 0 0 6px rgba(255,255,0,0.7);
+        transform: translate(-50%, -50%);
+        transition: transform 0.08s ease;
+        opacity: 0;
+        mix-blend-mode: screen;
+    `;
+    cursor.textContent = '♥';
+    document.body.appendChild(cursor);
+
+    document.addEventListener('mousemove', (e) => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+        cursor.style.opacity = '0.85';
+    });
+    document.addEventListener('mouseleave', () => { cursor.style.opacity = '0'; });
+})();
+</script>
+<script>
+/* ============================================================
+   ИГРОВОЙ ЭКРАН — ресурсы, ходы, события
+   ============================================================ */
+
+const GameState = {
+    turn: 1,
+    maxTurns: 12,
+    resources: {
+        hope: 60,       // Надежда (0-100)
+        unity: 50,      // Единство (0-100)
+        souls: 40       // Души (0-100)
+    },
+    log: [],
+    currentEvent: null,
+    finished: false,
+    character: null
+};
+
+/* Каталог событий: каждый ход — случайное событие с 3 вариантами */
+const EVENTS = [
+    {
+        id: 'border_raid',
+        title: 'Набег на границу',
+        desc: 'Люди перешли границу у Восточного хребта. Гарнизон окраин держится, но просит подкрепления.',
+        choices: [
+            { text: 'Отправить резерв',    effects: { hope: +8, unity: -5, souls: -10 }, result: 'Граница устояла. Резервисты устали, но люди благодарны.' },
+            { text: 'Игнорировать',        effects: { hope: -12, unity: -8, souls: 0 },  result: 'Граница пала. Слухи о вашей пассивности расходятся по королевству.' },
+            { text: 'Диверсия в тыл',      effects: { hope: +4, unity: +3, souls: -15 }, result: 'Смелая вылазка отвлекла людей. Но вы потеряли лучших разведчиков.' }
+        ]
+    },
+    {
+        id: 'council_split',
+        title: 'Раскол в совете',
+        desc: 'Старейшины требуют решительных действий. Молодые генералы поддерживают радикалов.',
+        choices: [
+            { text: 'Поддержать старейшин', effects: { hope: +5, unity: +10, souls: -5 },  result: 'Совет сплотился вокруг вас. Но армия недовольна осторожностью.' },
+            { text: 'Поддержать генералов', effects: { hope: +6, unity: -12, souls: -8 }, result: 'Армия вдохновлена. Старейшины демонстративно покинули зал.' },
+            { text: 'Компромисс',           effects: { hope: +2, unity: +4, souls: -3 },  result: 'Все недовольны, но никто не ушёл. Хрупкий баланс сохранён.' }
+        ]
+    },
+    {
+        id: 'refugees',
+        title: 'Поток беженцев',
+        desc: 'Сотни монстров бегут из сожжённых деревень. Столица не готова их принять.',
+        choices: [
+            { text: 'Открыть ворота',       effects: { hope: +10, unity: -10, souls: -12 }, result: 'Беженцы благословляют вас. Запасы тают, горожане ропщут.' },
+            { text: 'Закрыть ворота',       effects: { hope: -15, unity: +6, souls: 0 },   result: 'Порядок сохранён. Но крики у ворот будут сниться вам ещё долго.' },
+            { text: 'Лагеря за стенами',    effects: { hope: +4, unity: -3, souls: -6 },   result: 'Компромисс. Холодно, тесно, но все живы.' }
+        ]
+    },
+    {
+        id: 'artifact',
+        title: 'Древний артефакт',
+        desc: 'Разведчики нашли в руинах артефакт людей, дающий силу магии. Он опасен.',
+        choices: [
+            { text: 'Изучить',              effects: { hope: +6, unity: -4, souls: -14 },  result: 'Артефакт дал знания. Но двое магов заплатили здоровьем.' },
+            { text: 'Уничтожить',           effects: { hope: -3, unity: +8, souls: -4 },   result: 'Опасно, но правильно. Совет оценил осторожность.' },
+            { text: 'Спрятать',             effects: { hope: +2, unity: 0, souls: -6 },    result: 'Артефакт в тайнике. Возможно, однажды он спасёт вас.' }
+        ]
+    },
+    {
+        id: 'defection',
+        title: 'Измена в ставке',
+        desc: 'Один из ваших командиров тайно переписывается с людьми. Доказательства у вас в руках.',
+        choices: [
+            { text: 'Казнить публично',     effects: { hope: -6, unity: +12, souls: -5 },  result: 'Дисциплина восстановлена. Но тень сомнения осталась.' },
+            { text: 'Перевербовать',        effects: { hope: +3, unity: -4, souls: -8 },   result: 'Он стал двойным агентом. Опасная игра, но полезная.' },
+            { text: 'Сослать',              effects: { hope: 0, unity: +4, souls: -3 },    result: 'Мягкое решение. Войско шепчется, но не бунтует.' }
+        ]
+    },
+    {
+        id: 'human_emissary',
+        title: 'Посол людей',
+        desc: 'Человек-маг прибыл с предложением перемирия. Он безоружен, но все помнят, что люди сделали.',
+        choices: [
+            { text: 'Выслушать',            effects: { hope: +10, unity: -12, souls: -6 }, result: 'Посол ушёл живым. Часть двора считает вас предателем.' },
+            { text: 'Изгнать',              effects: { hope: -4, unity: +8, souls: 0 },    result: 'Посол ушёл ни с чем. Война продолжается.' },
+            { text: 'Убить',                effects: { hope: -14, unity: +6, souls: -4 },  result: 'Жестокая расправа. Враги теперь не предложат мира.' }
+        ]
+    },
+    {
+        id: 'magic_surge',
+        title: 'Всплеск магии',
+        desc: 'Барьер ослаб. Поток магии рвётся наружу — можно использовать его, но риск велик.',
+        choices: [
+            { text: 'Направить в щит',      effects: { hope: +6, unity: +3, souls: -12 },  result: 'Щит столицы укреплён. Маги истощены.' },
+            { text: 'Копить силу',          effects: { hope: -2, unity: -2, souls: +18 },  result: 'Вы накопили силу. Но время упущено.' },
+            { text: 'Отпустить',            effects: { hope: +2, unity: 0, souls: -8 },    result: 'Магия рассеялась. Ничего не произошло — и это хорошо.' }
+        ]
+    },
+    {
+        id: 'child_heir',
+        title: 'Наследник под угрозой',
+        desc: 'Убийца пробрался во дворец. Цель — юный наследник. Время на исходе.',
+        choices: [
+            { text: 'Спасти любой ценой',   effects: { hope: +12, unity: -6, souls: -14 }, result: 'Наследник жив. Но гвардия потеряла половину состава.' },
+            { text: 'Ловушка',              effects: { hope: +5, unity: +6, souls: -10 },  result: 'Убийца пойман. Двор восхищён вашей холодной головой.' },
+            { text: 'Эвакуация',            effects: { hope: -3, unity: +3, souls: -5 },   result: 'Дворец пуст, наследник в безопасности. Но враг скрылся.' }
+        ]
+    }
+];
+
+/* DOM */
+const gameScreen = document.getElementById('game-screen');
+let gameUI = null;
+
+/* Построение интерфейса игры внутри #game-screen */
+function buildGameUI() {
+    gameScreen.innerHTML = `
+        <div class="screen-title" id="game-title">Война началась</div>
+        <div class="game-wrap">
+            <div class="game-top">
+                <div class="char-card">
+                    <div class="char-portrait" id="game-avatar"></div>
+                    <div class="char-info" id="game-details"></div>
+                </div>
+                <div class="resources" id="game-resources"></div>
+            </div>
+
+            <div class="game-event" id="game-event"></div>
+
+            <div class="game-log" id="game-log"></div>
+
+            <div class="game-controls" id="game-controls">
+                <button class="nav-btn back" id="restart">← Начать заново</button>
+            </div>
+        </div>
+    `;
+
+    // добавляем стили для игры
+    const style = document.createElement('style');
+    style.textContent = `
+        #game-screen { padding: 26px 26px 22px; min-height: 520px; }
+        .game-wrap { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+        .game-top { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 700px) { .game-top { grid-template-columns: 1fr; } }
+
+        .char-card {
+            display: flex; gap: 14px; align-items: center;
+            background: #080808; padding: 12px 14px;
+            box-shadow:
+                0 -2px 0 0 #222, 0 2px 0 0 #222,
+                -2px 0 0 0 #222, 2px 0 0 0 #222;
+        }
+        .char-portrait {
+            width: 64px; height: 64px; border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--accent), 0 0 18px rgba(255,255,0,0.3);
+            position: relative; overflow: hidden;
+        }
+        .char-portrait::after {
+            content: ''; position: absolute; inset: 0;
+            background:
+                radial-gradient(circle at 32% 30%, rgba(255,255,255,0.45), transparent 45%),
+                radial-gradient(circle at 50% 55%, rgba(0,0,0,0.4), transparent 70%);
+            mix-blend-mode: overlay;
+        }
+        .char-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+        .char-info .ci-name {
+            font-size: 13px; font-weight: bold; color: var(--accent);
+            letter-spacing: 1px; text-shadow: 0 0 8px rgba(255,255,0,0.4);
+        }
+        .char-info .ci-sub { font-size: 11px; color: #888; letter-spacing: 0.5px; }
+
+        .resources {
+            display: flex; flex-direction: column; gap: 10px;
+            background: #080808; padding: 12px 16px;
+            box-shadow:
+                0 -2px 0 0 #222, 0 2px 0 0 #222,
+                -2px 0 0 0 #222, 2px 0 0 0 #222;
+        }
+        .res-row { display: grid; grid-template-columns: 90px 1fr 40px; align-items: center; gap: 10px; }
+        .res-label { font-size: 11px; letter-spacing: 1.5px; color: #aaa; text-transform: uppercase; }
+        .res-bar { display: flex; gap: 2px; height: 14px; }
+        .res-pip { flex: 1; background: #1a1a1a; box-shadow: 0 0 0 1px #000; transition: background 0.3s; }
+        .res-pip.on { box-shadow: 0 0 0 1px #000, 0 0 6px rgba(255,255,255,0.3); }
+        .res-row[data-res="hope"]  .res-pip.on { background: #ffcc00; box-shadow: 0 0 0 1px #000, 0 0 8px rgba(255,204,0,0.6); }
+        .res-row[data-res="unity"] .res-pip.on { background: #ff66aa; box-shadow: 0 0 0 1px #000, 0 0 8px rgba(255,102,170,0.6); }
+        .res-row[data-res="souls"] .res-pip.on { background: #33ccff; box-shadow: 0 0 0 1px #000, 0 0 8px rgba(51,204,255,0.6); }
+        .res-value { font-size: 12px; text-align: right; color: #ccc; }
+
+        .game-event {
+            background: #060606; padding: 18px 20px;
+            box-shadow:
+                0 0 0 1px #222, 0 0 0 3px #000, 0 0 0 4px #222;
+            display: flex; flex-direction: column; gap: 12px;
+            min-height: 180px;
+        }
+        .event-turn {
+            font-size: 10px; letter-spacing: 2px; color: #666; text-transform: uppercase;
+        }
+        .event-title {
+            font-size: 15px; font-weight: bold; letter-spacing: 1px; color: var(--accent);
+            text-shadow: 0 0 8px rgba(255,255,0,0.4);
+        }
+        .event-desc { font-size: 12.5px; color: #bbb; line-height: 1.6; }
+        .event-choices { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+        .event-choice {
+            background: #0a0a0a; color: var(--fg); font-family: inherit;
+            font-size: 12.5px; padding: 10px 14px; text-align: left; cursor: pointer;
+            transition: all 0.12s;
+            box-shadow:
+                0 -2px 0 0 #1e1e1e, 0 2px 0 0 #1e1e1e,
+                -2px 0 0 0 #1e1e1e, 2px 0 0 0 #1e1e1e;
+        }
+        .event-choice:hover {
+            background: rgba(255,255,0,0.05);
+            box-shadow:
+                0 -2px 0 0 var(--accent), 0 2px 0 0 var(--accent),
+                -2px 0 0 0 var(--accent), 2px 0 0 0 var(--accent);
+        }
+        .event-choice .ec-eff { font-size: 11px; color: #888; margin-left: 6px; }
+        .event-choice .ec-pos { color: #6f6; }
+        .event-choice .ec-neg { color: #f66; }
+
+        .game-log {
+            font-size: 11.5px; color: #888; line-height: 1.6;
+            max-height: 120px; overflow-y: auto;
+            padding: 8px 12px; background: #050505;
+            box-shadow: inset 0 0 0 1px #1a1a1a;
+            scrollbar-width: thin; scrollbar-color: #333 transparent;
+        }
+        .game-log::-webkit-scrollbar { width: 5px; }
+        .game-log::-webkit-scrollbar-thumb { background: #333; }
+        .game-log .log-line { padding: 2px 0; border-bottom: 1px dashed #111; }
+        .game-log .log-line:last-child { border-bottom: none; }
+        .game-log .log-turn { color: #555; margin-right: 6px; }
+
+        .game-controls { display: flex; justify-content: flex-start; padding-top: 10px; border-top: 1px solid #1a1a1a; }
+
+        .event-result { font-size: 12.5px; color: #ddd; line-height: 1.6; padding: 10px 12px; background: rgba(255,255,255,0.02); box-shadow: inset 0 0 0 1px #1a1a1a; }
+        .event-result .r-pos { color: #6f6; }
+        .event-result .r-neg { color: #f66; }
+        .event-continue {
+            align-self: flex-start; margin-top: 6px;
+            background: transparent; color: var(--accent); font-family: inherit;
+            font-size: 12px; letter-spacing: 2px; padding: 8px 18px; cursor: pointer;
+            box-shadow:
+                0 -2px 0 0 var(--accent), 0 2px 0 0 var(--accent),
+                -2px 0 0 0 var(--accent), 2px 0 0 0 var(--accent);
+        }
+        .event-continue:hover { background: var(--accent); color: #000; }
+    `;
+    document.head.appendChild(style);
+
+    gameUI = {
+        title:     document.getElementById('game-title'),
+        avatar:    document.getElementById('game-avatar'),
+        details:   document.getElementById('game-details'),
+        resources: document.getElementById('game-resources'),
+        event:     document.getElementById('game-event'),
+        log:       document.getElementById('game-log'),
+        controls:  document.getElementById('game-controls')
+    };
+}
+
+/* Отрисовка ресурсов */
+function renderResources() {
+    const r = GameState.resources;
+    const rows = [
+        { key: 'hope',  label: 'Надежда' },
+        { key: 'unity', label: 'Единство' },
+        { key: 'souls', label: 'Души' }
+    ];
+    gameUI.resources.innerHTML = rows.map(({ key, label }) => {
+        const val = Math.max(0, Math.min(100, r[key]));
+        const filled = Math.round(val / 5); // 20 сегментов
+        const pips = Array.from({ length: 20 }, (_, i) =>
+            `<span class="res-pip ${i < filled ? 'on' : ''}"></span>`
+        ).join('');
+        return `
+            <div class="res-row" data-res="${key}">
+                <span class="res-label">${label}</span>
+                <span class="res-bar">${pips}</span>
+                <span class="res-value">${val}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+/* Отрисовка персонажа */
+function renderCharacter() {
+    const c = GameState.character;
+    if (!c) return;
+    gameUI.avatar.style.background = `radial-gradient(circle at 32% 30%, ${c.role.c1}, ${c.role.c2} 70%, #000)`;
+    gameUI.details.innerHTML = `
+        <div class="ci-name">${c.role.short}</div>
+        <div class="ci-sub">${c.origin.name} · ${c.age.label}</div>
+    `;
+}
+
+/* Отрисовка лога */
+function renderLog() {
+    if (GameState.log.length === 0) {
+        gameUI.log.innerHTML = `<div class="log-line" style="color:#555;">— хроника пуста —</div>`;
+        return;
+    }
+    gameUI.log.innerHTML = GameState.log.map(l =>
+        `<div class="log-line"><span class="log-turn">#${l.turn}</span>${l.text}</div>`
+    ).join('');
+    gameUI.log.scrollTop = gameUI.log.scrollHeight;
+}
+
+/* Случайное событие с учётом того, что уже было */
+function pickEvent() {
+    const pool = EVENTS.filter(e => !GameState.log.some(l => l.eventId === e.id)) || EVENTS;
+    const list = pool.length ? pool : EVENTS;
+    return list[Math.floor(Math.random() * list.length)];
+}
+
+/* Отрисовка события */
+function renderEvent() {
+    if (GameState.finished) {
+        renderEnding();
+        return;
+    }
+    const ev = GameState.currentEvent;
+    if (!ev) return;
+
+    gameUI.event.innerHTML = `
+        <div class="event-turn">Ход ${GameState.turn} / ${GameState.maxTurns}</div>
+        <div class="event-title">${ev.title}</div>
+        <div class="event-desc">${ev.desc}</div>
+        <div class="event-choices">
+            ${ev.choices.map((ch, i) => {
+                const eff = Object.entries(ch.effects).map(([k, v]) => {
+                    const cls = v > 0 ? 'ec-pos' : v < 0 ? 'ec-neg' : '';
+                    const sign = v > 0 ? '+' : '';
+                    return `<span class="${cls}">${sign}${v} ${k}</span>`;
+                }).join(' ');
+                return `<button class="event-choice" data-choice="${i}">
+                    <span>${ch.text}</span>
+                    <span class="ec-eff">${eff}</span>
+                </button>`;
+            }).join('')}
+        </div>
+    `;
+
+    gameUI.event.querySelectorAll('.event-choice').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.choice);
+            applyChoice(ev.choices[idx]);
+        });
+    });
+}
+
+/* Применение выбора */
+function applyChoice(choice) {
+    AudioEngine.select();
+    // эффекты
+    for (const [k, v] of Object.entries(choice.effects)) {
+        GameState.resources[k] = Math.max(0, Math.min(100, GameState.resources[k] + v));
+    }
+    // лог
+    GameState.log.push({
+        turn: GameState.turn,
+        eventId: GameState.currentEvent.id,
+        text: `${GameState.currentEvent.title} — ${choice.text}. ${choice.result}`
+    });
+
+    // показать результат
+    const effStr = Object.entries(choice.effects).map(([k, v]) => {
+        const cls = v > 0 ? 'r-pos' : v < 0 ? 'r-neg' : '';
+        const sign = v > 0 ? '+' : '';
+        return `<span class="${cls}">${sign}${v} ${k}</span>`;
+    }).join(' ');
+
+    gameUI.event.innerHTML = `
+        <div class="event-turn">Ход ${GameState.turn} / ${GameState.maxTurns}</div>
+        <div class="event-title">${GameState.currentEvent.title}</div>
+        <div class="event-result">
+            <div>${choice.result}</div>
+            <div style="margin-top:8px;">${effStr}</div>
+        </div>
+        <button class="event-continue" id="continue-btn">Далее →</button>
+    `;
+
+    document.getElementById('continue-btn').addEventListener('click', () => {
+        AudioEngine.confirm();
+        nextTurn();
+    });
+
+    renderResources();
+    renderLog();
+}
+
+/* Переход к следующему ходу */
+function nextTurn() {
+    GameState.turn++;
+    if (GameState.turn > GameState.maxTurns || checkEnding()) {
+        GameState.finished = true;
+        renderEvent();
+        return;
+    }
+    GameState.currentEvent = pickEvent();
+    renderEvent();
+}
+
+/* Проверка условий завершения */
+function checkEnding() {
+    const r = GameState.resources;
+    if (r.hope <= 0 || r.unity <= 0 || r.souls <= 0) return true;
+    if (r.hope >= 100 && r.unity >= 100 && r.souls >= 100) return true;
+    return false;
+}
+
+/* Экран финала */
+function renderEnding() {
+    const r = GameState.resources;
+    let title, desc;
+    if (r.hope <= 0) {
+        title = 'Надежда угасла';
+        desc = 'Народ потерял веру. Ваше имя произносят шёпотом — как проклятие. Династия падёт ещё до конца войны.';
+    } else if (r.unity <= 0) {
+        title = 'Раскол';
+        desc = 'Единство рухнуло. Двор, армия и народ — три враждующих лагеря. Война с людьми теперь кажется мелочью.';
+    } else if (r.souls <= 0) {
+        title = 'Души иссякли';
+        desc = 'Магия угасла вместе с последними душами. Монстры бессильны — и люди это знают.';
+    } else if (r.hope >= 100 && r.unity >= 100 && r.souls >= 100) {
+        title = 'Золотой век';
+        desc = 'Надежда, единство и души — всё на пределе. Под вашим началом монстры могут бросить вызов самим людям.';
+    } else {
+        title = 'Война продолжается';
+        desc = `Вы прошли ${GameState.maxTurns} ходов. Ни победы, ни поражения — только бесконечная война. Но вы всё ещё стоите.`;
+    }
+
+    gameUI.event.innerHTML = `
+        <div class="event-turn">Финал</div>
+        <div class="event-title">${title}</div>
+        <div class="event-result">
+            <div>${desc}</div>
+            <div style="margin-top:10px; color:#888;">
+                Итоговые ресурсы: Надежда ${r.hope}, Единство ${r.unity}, Души ${r.souls}
+            </div>
+        </div>
+    `;
+}
+
+/* Запуск игры */
+function startGame() {
+    GameState.turn = 1;
+    GameState.resources = { hope: 60, unity: 50, souls: 40 };
+    GameState.log = [];
+    GameState.finished = false;
+
+    const origin = ORIGINS.find(o => o.id === state.origin);
+    const gender = GENDERS.find(g => g.id === state.gender);
+    const role   = ROLES.find(r => r.id === state.role);
+    const age    = AGES.find(a => a.id === state.age);
+
+    GameState.character = { origin, gender, role, age };
+    GameState.currentEvent = pickEvent();
+
+    renderCharacter();
+    renderResources();
+    renderLog();
+    renderEvent();
+    goTo('game');
+}
+
+/* Перехватываем кнопку «Начать» — вместо заглушки запускаем игру */
+document.getElementById('start-game').addEventListener('click', () => {
+    AudioEngine.confirm();
+    startGame();
+    localStorage.setItem('dreemurr_character', JSON.stringify({
+        origin: state.origin,
+        gender: state.gender,
+        role: state.role,
+        age: state.age
+    }));
+});
+
+/* Перезапуск из игрового экрана */
+document.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'restart') {
+        AudioEngine.back();
+        state.origin = state.gender = state.role = state.age = null;
+        currentStep = 'origin';
+        document.querySelectorAll('.option.selected, .role-item.active, .age-btn.selected')
+            .forEach(el => el.classList.remove('selected', 'active'));
+        nextOrigin.disabled = true;
+        nextGender.disabled = true;
+        nextRole.disabled = true;
+        nextAge.disabled = true;
+        updateRoleAvailability();
+        renderRoleDetailEmpty();
+        goTo('origin');
+    }
+});
+
+/* ============================================================
+   ЗАГРУЗКА СОХРАНЁННОГО ПЕРСОНАЖА ПРИ СТАРТЕ
+   ============================================================ */
+(function loadSavedCharacter() {
+    try {
+        const raw = localStorage.getItem('dreemurr_character');
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (!saved.origin || !saved.gender || !saved.role || !saved.age) return;
+
+        // восстановить state
+        state.origin = saved.origin;
+        state.gender = saved.gender;
+        state.role   = saved.role;
+        state.age    = saved.age;
+
+        // визуально отметить выборы
+        setTimeout(() => {
+            document.querySelectorAll('#origin-list .option').forEach(el => {
+                if (el.dataset.id === saved.origin) el.classList.add('selected');
+            });
+            document.querySelectorAll('#gender-list .option').forEach(el => {
+                if (el.dataset.id === saved.gender) el.classList.add('selected');
+            });
+            document.querySelectorAll('.age-btn').forEach(el => {
+                if (el.dataset.id === saved.age) el.classList.add('selected');
+            });
+            // роли — активная
+            updateRoleAvailability();
+            const cur = ROLES.find(x => x.id === saved.role);
+            if (cur) {
+                renderRoleDetail(cur);
+                document.querySelectorAll('.role-item').forEach(el => {
+                    el.classList.toggle('active', el.dataset.roleId === saved.role);
+                });
+            }
+
+            nextOrigin.disabled = false;
+            nextGender.disabled = false;
+            nextRole.disabled = false;
+            nextAge.disabled = false;
+        }, 100);
+    } catch (e) {
+        /* ignore */
+    }
+})();
+
+/* Инициализация игрового UI при загрузке */
+buildGameUI();
+</script>
+<script>
+/* ============================================================
+   ВЛИЯНИЕ ПЕРСОНАЖА НА СТАРТОВЫЕ РЕСУРСЫ
+   ============================================================ */
+
+const START_BONUSES = {
+    origin: {
+        main_branch:   { hope: +10, unity: +5,  souls: 0  },
+        side_branch:   { hope: +3,  unity: +3,  souls: +2 },
+        bastard:       { hope: -5,  unity: -8,  souls: +10 },
+        impoverished:  { hope: -8,  unity: +5,  souls: +5 }
+    },
+    age: {
+        young:   { hope: +5,  unity: -3,  souls: +3 },
+        adult:   { hope: +3,  unity: +3,  souls: 0  },
+        veteran: { hope: 0,   unity: +6,  souls: -4 },
+        elder:   { hope: +8,  unity: -2,  souls: -6 }
+    }
+};
+
+function applyStartBonuses() {
+    const base = { hope: 60, unity: 50, souls: 40 };
+    const origin = START_BONUSES.origin[state.origin] || {};
+    const age = START_BONUSES.age[state.age] || {};
+
+    const result = { ...base };
+    ['hope', 'unity', 'souls'].forEach(k => {
+        result[k] = Math.max(0, Math.min(100,
+            base[k] + (origin[k] || 0) + (age[k] || 0)
+        ));
+    });
+    return result;
+}
+
+/* ============================================================
+   УНИКАЛЬНЫЕ СОБЫТИЯ ДЛЯ РОЛЕЙ
+   ============================================================ */
+
+const ROLE_EVENTS = {
+    asgore_proto: [
+        {
+            id: 'fire_oath',
+            title: 'Клятва Огня',
+            desc: 'Старые генералы требуют, чтобы вы провели древний ритуал — клятву Огня. Он укрепит армию, но сожжёт часть вашей магии.',
+            choices: [
+                { text: 'Провести ритуал',  effects: { hope: +10, unity: +8, souls: -14 }, result: 'Армия воспламенена. Ваши руки дрожат от усталости.' },
+                { text: 'Отказаться',       effects: { hope: -6, unity: -4, souls: 0 },    result: 'Генералы недовольны. Но вы сохранили силы.' },
+                { text: 'Отложить',         effects: { hope: +2, unity: +3, souls: -4 },   result: 'Время есть. Пока.' }
+            ]
+        }
+    ],
+    prince_avant: [
+        {
+            id: 'front_charge',
+            title: 'Атака на передовой',
+            desc: 'Войска ждут вашего приказа. Вы можете лично возглавить атаку — это вдохновит армию, но риск огромен.',
+            choices: [
+                { text: 'Лично в бой',      effects: { hope: +14, unity: +10, souls: -18 }, result: 'Вы вернулись живым. Армия поёт ваше имя.' },
+                { text: 'Послать генерала', effects: { hope: +3, unity: +4, souls: -6 },     result: 'Атака удалась, но лавры достались другому.' },
+                { text: 'Отступить',        effects: { hope: -10, unity: -6, souls: 0 },    result: 'Солдаты шепчутся о вашей трусости.' }
+            ]
+        }
+    ],
+    exile_general: [
+        {
+            id: 'underground_cell',
+            title: 'Подпольная ячейка',
+            desc: 'Ваши радикалы готовы к перевороту. Один удар — и король падёт. Но если провалитесь — вас ждёт казнь.',
+            choices: [
+                { text: 'Ударить сейчас',   effects: { hope: -10, unity: +18, souls: -12 }, result: 'Двор в смятении. Власть шатается — но и вы в опасности.' },
+                { text: 'Ждать',            effects: { hope: +2, unity: +4, souls: -4 },     result: 'Терпение — тоже оружие.' },
+                { text: 'Распустить ячейку', effects: { hope: +5, unity: -10, souls: -2 },   result: 'Вы отказались от переворота. Радикалы вас не простят.' }
+            ]
+        }
+    ],
+    border_knight: [
+        {
+            id: 'last_stand',
+            title: 'Последний рубеж',
+            desc: 'Люди прорвали фронт. Ваш гарнизон — последняя преграда на пути к столице. Приказ короля: отступать.',
+            choices: [
+                { text: 'Держаться',        effects: { hope: +16, unity: +8, souls: -16 },  result: 'Вы выстояли. Столица спасена — но цена высока.' },
+                { text: 'Отступить',        effects: { hope: -8, unity: +4, souls: -2 },    result: 'Стратегически верно. Но вы потеряли лицо.' },
+                { text: 'Контратака',       effects: { hope: +8, unity: -4, souls: -10 },   result: 'Безумный манёвр сработал. Враг отброшен.' }
+            ]
+        }
+    ],
+    queen_strategist: [
+        {
+            id: 'logistics_crisis',
+            title: 'Кризис снабжения',
+            desc: 'Запасы на исходе. Ваш план распределения — либо урезать пайки армии, либо урезать пайки горожан.',
+            choices: [
+                { text: 'Урезать армию',    effects: { hope: +6, unity: -10, souls: -4 },   result: 'Горожане сыты. Солдаты ворчат.' },
+                { text: 'Урезать горожан',  effects: { hope: -8, unity: +8, souls: -2 },    result: 'Армия сильна. Но народ ропщет.' },
+                { text: 'Реквизиция',       effects: { hope: -4, unity: +4, souls: -8 },    result: 'Непопулярное, но эффективное решение.' }
+            ]
+        }
+    ],
+    chief_diplomat: [
+        {
+            id: 'secret_meeting',
+            title: 'Тайная встреча',
+            desc: 'Человеческий маг предлагает встречу без свидетелей. Он готов говорить о мире — но двор узнает.',
+            choices: [
+                { text: 'Встретиться',      effects: { hope: +12, unity: -12, souls: -6 },  result: 'Вы получили шанс на мир. Но двор шепчется об измене.' },
+                { text: 'Отказать',         effects: { hope: -4, unity: +8, souls: 0 },     result: 'Война продолжается.' },
+                { text: 'Подослать шпиона', effects: { hope: +4, unity: +2, souls: -8 },    result: 'Вы узнали многое. Но доверие потеряно.' }
+            ]
+        }
+    ],
+    shadow_mother: [
+        {
+            id: 'poisoned_cup',
+            title: 'Отравленная чаша',
+            desc: 'Один из советников мешает вашим планам. У вас есть яд и возможность — но есть и совесть.',
+            choices: [
+                { text: 'Устранить',        effects: { hope: -12, unity: +14, souls: -6 },  result: 'Советник мёртв. Ваш путь чист — но руки нет.' },
+                { text: 'Шантаж',           effects: { hope: +2, unity: +6, souls: -4 },    result: 'Он теперь ваш. Пока.' },
+                { text: 'Пощадить',         effects: { hope: +6, unity: -4, souls: 0 },     result: 'Вы проявили милосердие. Возможно, зря.' }
+            ]
+        }
+    ],
+    rebel_warrior: [
+        {
+            id: 'open_rebellion',
+            title: 'Открытый мятеж',
+            desc: 'Ваши отряды готовы поднять знамя. Король слаб, но у него ещё есть гвардия. Выбор — за вами.',
+            choices: [
+                { text: 'Поднять знамя',    effects: { hope: +10, unity: -14, souls: -10 }, result: 'Гражданская война началась. Но вы — на коне.' },
+                { text: 'Ждать удобного дня', effects: { hope: +3, unity: +4, souls: -2 },   result: 'Терпение. Пока.' },
+                { text: 'Присягнуть королю', effects: { hope: -6, unity: +10, souls: 0 },   result: 'Вы склонили голову. Мятежники вас не поймут.' }
+            ]
+        }
+    ]
+};
+
+/* Расширяем pickEvent — добавляем ролевые события */
+const __originalPickEvent = pickEvent;
+pickEvent = function() {
+    const role = state.role;
+    const rolePool = ROLE_EVENTS[role] || [];
+
+    // 50% шанс ролевого события, если оно ещё не было
+    const availableRoleEvents = rolePool.filter(
+        e => !GameState.log.some(l => l.eventId === e.id)
+    );
+    if (availableRoleEvents.length && Math.random() < 0.5) {
+        return availableRoleEvents[0];
+    }
+
+    // иначе — обычное событие
+    const pool = EVENTS.filter(e => !GameState.log.some(l => l.eventId === e.id));
+    const list = pool.length ? pool : EVENTS;
+    return list[Math.floor(Math.random() * list.length)];
+};
+
+/* Переопределяем startGame, чтобы применить бонусы */
+const __originalStartGame = startGame;
+startGame = function() {
+    GameState.turn = 1;
+    GameState.resources = applyStartBonuses();
+    GameState.log = [];
+    GameState.finished = false;
+    GameState.history = []; // для графика
+
+    const origin = ORIGINS.find(o => o.id === state.origin);
+    const gender = GENDERS.find(g => g.id === state.gender);
+    const role   = ROLES.find(r => r.id === state.role);
+    const age    = AGES.find(a => a.id === state.age);
+
+    GameState.character = { origin, gender, role, age };
+    GameState.currentEvent = pickEvent();
+
+    recordHistory();
+    renderCharacter();
+    renderResources();
+    renderLog();
+    renderEvent();
+    goTo('game');
+};
+
+/* ============================================================
+   ИСТОРИЯ РЕСУРСОВ ДЛЯ ГРАФИКА
+   ============================================================ */
+
+function recordHistory() {
+    if (!GameState.history) GameState.history = [];
+    GameState.history.push({
+        turn: GameState.turn,
+        hope: GameState.resources.hope,
+        unity: GameState.resources.unity,
+        souls: GameState.resources.souls
+    });
+}
+
+/* Перехватываем applyChoice, чтобы записывать историю */
+const __originalApplyChoice = applyChoice;
+applyChoice = function(choice) {
+    __originalApplyChoice(choice);
+    recordHistory();
+};
+
+/* ============================================================
+   РАСШИРЕННЫЙ ФИНАЛЬНЫЙ ЭКРАН
+   ============================================================ */
+
+const __originalRenderEnding = renderEnding;
+renderEnding = function() {
+    const r = GameState.resources;
+    const c = GameState.character;
+
+    let title, desc, titleColor;
+    if (r.hope <= 0) {
+        title = 'Надежда угасла'; titleColor = '#888';
+        desc = 'Народ потерял веру. Ваше имя произносят шёпотом — как проклятие. Династия падёт ещё до конца войны.';
+    } else if (r.unity <= 0) {
+        title = 'Раскол'; titleColor = '#f66';
+        desc = 'Единство рухнуло. Двор, армия и народ — три враждующих лагеря. Война с людьми теперь кажется мелочью.';
+    } else if (r.souls <= 0) {
+        title = 'Души иссякли'; titleColor = '#66f';
+        desc = 'Магия угасла вместе с последними душами. Монстры бессильны — и люди это знают.';
+    } else if (r.hope >= 100 && r.unity >= 100 && r.souls >= 100) {
+        title = 'Золотой век'; titleColor = '#ff0';
+        desc = 'Надежда, единство и души — всё на пределе. Под вашим началом монстры могут бросить вызов самим людям.';
+    } else {
+        title = 'Война продолжается'; titleColor = '#aaa';
+        desc = `Вы прошли ${GameState.maxTurns} ходов. Ни победы, ни поражения — только бесконечная война. Но вы всё ещё стоите.`;
+    }
+
+    // статистика
+    const stats = `
+        <div class="end-stats">
+            <div class="end-stat">
+                <span class="es-label">Надежда</span>
+                <span class="es-value" style="color:#ffcc00;">${r.hope}</span>
+            </div>
+            <div class="end-stat">
+                <span class="es-label">Единство</span>
+                <span class="es-value" style="color:#ff66aa;">${r.unity}</span>
+            </div>
+            <div class="end-stat">
+                <span class="es-label">Души</span>
+                <span class="es-value" style="color:#33ccff;">${r.souls}</span>
+            </div>
+        </div>
+    `;
+
+    // мини-график (ASCII-стиль, пиксельные точки)
+    const graph = buildMiniGraph();
+
+    // персонаж
+    const charInfo = `
+        <div class="end-char">
+            <span style="color:#666;">${c.origin.name} · ${c.role.short} · ${c.age.label}</span>
+        </div>
+    `;
+
+    gameUI.event.innerHTML = `
+        <div class="event-turn">Финал · Ходов: ${GameState.turn - 1}</div>
+        <div class="event-title" style="color:${titleColor}; text-shadow: 0 0 12px ${titleColor}66;">${title}</div>
+        <div class="event-result">
+            <div>${desc}</div>
+        </div>
+        ${stats}
+        ${graph}
+        ${charInfo}
+        <button class="event-continue" id="ending-restart">Начать заново →</button>
+    `;
+
+    document.getElementById('ending-restart').addEventListener('click', () => {
+        AudioEngine.confirm();
+        localStorage.removeItem('dreemurr_character');
+        state.origin = state.gender = state.role = state.age = null;
+        currentStep = 'origin';
+        document.querySelectorAll('.option.selected, .role-item.active, .age-btn.selected')
+            .forEach(el => el.classList.remove('selected', 'active'));
+        nextOrigin.disabled = true;
+        nextGender.disabled = true;
+        nextRole.disabled = true;
+        nextAge.disabled = true;
+        updateRoleAvailability();
+        renderRoleDetailEmpty();
+        goTo('origin');
+    });
+
+    // добавляем стили для финала
+    if (!document.getElementById('end-styles')) {
+        const s = document.createElement('style');
+        s.id = 'end-styles';
+        s.textContent = `
+            .end-stats {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+                margin-top: 12px;
+            }
+            .end-stat {
+                background: #060606;
+                padding: 10px 12px;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                box-shadow: 0 0 0 1px #1a1a1a, 0 0 0 3px #000, 0 0 0 4px #1a1a1a;
+            }
+            .es-label { font-size: 10px; letter-spacing: 1.5px; color: #888; text-transform: uppercase; }
+            .es-value { font-size: 20px; font-weight: bold; }
+
+            .end-graph {
+                margin-top: 14px;
+                padding: 12px;
+                background: #050505;
+                box-shadow: inset 0 0 0 1px #1a1a1a;
+                overflow-x: auto;
+            }
+            .end-graph-title {
+                font-size: 10px;
+                letter-spacing: 1.5px;
+                color: #666;
+                margin-bottom: 8px;
+                text-transform: uppercase;
+            }
+            .graph-row {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                margin: 4px 0;
+            }
+            .graph-label {
+                font-size: 10px;
+                width: 62px;
+                color: #888;
+                flex-shrink: 0;
+            }
+            .graph-line {
+                flex: 1;
+                display: flex;
+                gap: 2px;
+                align-items: flex-end;
+                height: 32px;
+            }
+            .graph-bar {
+                flex: 1;
+                min-width: 4px;
+                max-width: 14px;
+                transition: height 0.3s;
+            }
+            .graph-bar.hope  { background: #ffcc00; box-shadow: 0 0 4px #ffcc0066; }
+            .graph-bar.unity { background: #ff66aa; box-shadow: 0 0 4px #ff66aa66; }
+            .graph-bar.souls { background: #33ccff; box-shadow: 0 0 4px #33ccff66; }
+
+            .end-char {
+                margin-top: 14px;
+                padding-top: 12px;
+                border-top: 1px dashed #1a1a1a;
+                font-size: 11px;
+                text-align: center;
+            }
+            .end-char span { letter-spacing: 0.5px; }
+        `;
+        document.head.appendChild(s);
+    }
+};
+
+/* Мини-график: для каждого ресурса — столбики по ходам */
+function buildMiniGraph() {
+    if (!GameState.history || GameState.history.length < 2) return '';
+
+    const rows = [
+        { key: 'hope',  label: 'Надежда', cls: 'hope' },
+        { key: 'unity', label: 'Единство', cls: 'unity' },
+        { key: 'souls', label: 'Души', cls: 'souls' }
+    ];
+
+    const rowsHtml = rows.map(row => {
+        const bars = GameState.history.map(h => {
+            const val = h[row.key];
+            const height = Math.max(2, Math.round(val / 100 * 32));
+            return `<span class="graph-bar ${row.cls}" style="height:${height}px;" title="${row.label}: ${val}"></span>`;
+        }).join('');
+        return `
+            <div class="graph-row">
+                <span class="graph-label">${row.label}</span>
+                <span class="graph-line">${bars}</span>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="end-graph">
+            <div class="end-graph-title">Динамика ресурсов по ходам</div>
+            ${rowsHtml}
+        </div>
+    `;
+}
+
+/* ============================================================
+   ПЕРЕХВАТ КНОПКИ «ДАЛЕЕ» — теперь стартует игру с бонусами
+   ============================================================ */
+// (основной обработчик уже в части 4, здесь он переопределён через startGame)
+
+/* ============================================================
+   ИНИЦИАЛИЗАЦИЯ
+   ============================================================ */
+console.log('%c Dreemurr Dynasty — loaded ', 'background:#ff0; color:#000; font-weight:bold; padding:4px 8px;');
+console.log('%c Ресурсы: Надежда / Единство / Души ', 'color:#888;');
+console.log('%c 12 ходов, 4 финала, ролевые события ', 'color:#888;');
+</script>
+<script>
+/* ============================================================
+   ВЫБОР СЛОЖНОСТИ
+   ============================================================ */
+
+const DIFFICULTY = {
+    easy:   { id: 'easy',   name: 'Милосердный', mult: 0.6, startBonus: +10, desc: 'Эффекты ослаблены, ресурсы щедрее. Для тех, кто хочет историю.' },
+    normal: { id: 'normal', name: 'Обычный',     mult: 1.0, startBonus: 0,   desc: 'Сбалансированная война. Как задумано.' },
+    hard:   { id: 'hard',   name: 'Жестокий',    mult: 1.4, startBonus: -10, desc: 'Каждое решение бьёт больнее. Для тех, кто любит вызов.' }
+};
+
+let chosenDifficulty = 'normal';
+
+/* Показываем выбор сложности после нажатия «Начать» */
+const __originalStartGameClick = document.getElementById('start-game').onclick;
+
+document.getElementById('start-game').addEventListener('click', function(e) {
+    e.stopImmediatePropagation();
+    AudioEngine.confirm();
+    showDifficultyScreen();
+}, true);
+
+function showDifficultyScreen() {
+    // Создаём оверлей выбора сложности
+    const overlay = document.createElement('div');
+    overlay.id = 'difficulty-overlay';
+    overlay.style.cssText = `
+        position: fixed; inset: 0; z-index: 20000;
+        background: rgba(0,0,0,0.92);
+        display: flex; align-items: center; justify-content: center;
+        padding: 20px;
+        animation: fadeIn 0.25s ease;
+    `;
+
+    overlay.innerHTML = `
+        <div class="diff-box">
+            <div class="diff-title">Сложность</div>
+            <div class="diff-sub">Насколько жестокой будет эта война?</div>
+            <div class="diff-list">
+                ${Object.values(DIFFICULTY).map(d => `
+                    <button class="diff-option ${d.id === 'normal' ? 'selected' : ''}" data-diff="${d.id}">
+                        <span class="diff-name">${d.name}</span>
+                        <span class="diff-desc">${d.desc}</span>
+                    </button>
+                `).join('')}
+            </div>
+            <button class="diff-confirm" id="diff-confirm">Начать войну →</button>
+        </div>
+    `;
+
+    // стили
+    if (!document.getElementById('diff-styles')) {
+        const s = document.createElement('style');
+        s.id = 'diff-styles';
+        s.textContent = `
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            .diff-box {
+                background: var(--panel);
+                padding: 32px;
+                max-width: 560px; width: 100%;
+                display: flex; flex-direction: column; gap: 18px;
+                box-shadow:
+                    0 -3px 0 0 var(--border), 0 3px 0 0 var(--border),
+                    -3px 0 0 0 var(--border), 3px 0 0 0 var(--border);
+            }
+            .diff-title {
+                font-size: 16px; letter-spacing: 5px; text-transform: uppercase;
+                color: var(--accent); text-align: center;
+                text-shadow: 0 0 12px rgba(255,255,0,0.5);
+            }
+            .diff-sub {
+                font-size: 12px; color: var(--dim); text-align: center;
+                letter-spacing: 1px; margin-top: -8px;
+            }
+            .diff-list { display: flex; flex-direction: column; gap: 8px; }
+            .diff-option {
+                background: #080808; color: var(--fg); font-family: inherit;
+                padding: 14px 16px; text-align: left; cursor: pointer;
+                display: flex; flex-direction: column; gap: 4px;
+                transition: all 0.12s;
+                box-shadow:
+                    0 -2px 0 0 #1e1e1e, 0 2px 0 0 #1e1e1e,
+                    -2px 0 0 0 #1e1e1e, 2px 0 0 0 #1e1e1e;
+            }
+            .diff-option:hover {
+                background: #0d0d0d;
+                box-shadow:
+                    0 -2px 0 0 #444, 0 2px 0 0 #444,
+                    -2px 0 0 0 #444, 2px 0 0 0 #444;
+            }
+            .diff-option.selected {
+                background: rgba(255,255,0,0.06);
+                box-shadow:
+                    0 -2px 0 0 var(--accent), 0 2px 0 0 var(--accent),
+                    -2px 0 0 0 var(--accent), 2px 0 0 0 var(--accent),
+                    0 0 18px rgba(255,255,0,0.15);
+            }
+            .diff-name {
+                font-size: 14px; font-weight: bold; letter-spacing: 1px;
+            }
+            .diff-option.selected .diff-name {
+                color: var(--accent);
+                text-shadow: 0 0 8px rgba(255,255,0,0.5);
+            }
+            .diff-desc { font-size: 11.5px; color: #999; }
+            .diff-confirm {
+                background: transparent; color: var(--accent); font-family: inherit;
+                font-size: 13px; letter-spacing: 3px; padding: 12px 24px;
+                cursor: pointer; align-self: center; margin-top: 6px;
+                box-shadow:
+                    0 -2px 0 0 var(--accent), 0 2px 0 0 var(--accent),
+                    -2px 0 0 0 var(--accent), 2px 0 0 0 var(--accent);
+                text-transform: uppercase;
+            }
+            .diff-confirm:hover {
+                background: var(--accent); color: #000;
+                box-shadow:
+                    0 -2px 0 0 var(--accent), 0 2px 0 0 var(--accent),
+                    -2px 0 0 0 var(--accent), 2px 0 0 0 var(--accent),
+                    0 0 24px rgba(255,255,0,0.5);
+            }
+        `;
+        document.head.appendChild(s);
+    }
+
+    document.body.appendChild(overlay);
+
+    overlay.querySelectorAll('.diff-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+            AudioEngine.select();
+            chosenDifficulty = btn.dataset.diff;
+            overlay.querySelectorAll('.diff-option').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        });
+    });
+
+    document.getElementById('diff-confirm').addEventListener('click', () => {
+        AudioEngine.confirm();
+        overlay.remove();
+        __originalStartGame.call(document.getElementById('start-game'));
+    });
+}
+
+/* ============================================================
+   ТРИ АКТА ВОЙНЫ
+   ============================================================ */
+
+const ACTS = [
+    { id: 1, name: 'Акт I — Первая кровь',     turns: 4, desc: 'Война только начинается. Люди наступают, монстры собирают силы.' },
+    { id: 2, name: 'Акт II — Пламя и пепел',    turns: 4, desc: 'Война в разгаре. Обе стороны несут потери. Решения становятся тяжелее.' },
+    { id: 3, name: 'Акт III — Последний рубеж', turns: 4, desc: 'Кульминация. Один неверный ход — и династия падёт. Или возвысится.' }
+];
+
+let currentAct = 0;
+
+function getActByTurn(turn) {
+    // turn: 1..12
+    if (turn <= 4)  return ACTS[0];
+    if (turn <= 8)  return ACTS[1];
+    return ACTS[2];
+}
+
+/* Интро-сцена акта */
+function showActIntro(act, callback) {
+    const overlay = document.createElement('div');
+    overlay.id = 'act-overlay';
+    overlay.style.cssText = `
+        position: fixed; inset: 0; z-index: 15000;
+        background: rgba(0,0,0,0.94);
+        display: flex; align-items: center; justify-content: center;
+        padding: 20px;
+        animation: fadeIn 0.4s ease;
+    `;
+    overlay.innerHTML = `
+        <div class="act-box">
+            <div class="act-num">${act.name.split('—')[0].trim()}</div>
+            <div class="act-name">${act.name.split('—')[1] ? act.name.split('—')[1].trim() : act.name}</div>
+            <div class="act-desc">${act.desc}</div>
+        </div>
+    `;
+    if (!document.getElementById('act-styles')) {
+        const s = document.createElement('style');
+        s.id = 'act-styles';
+        s.textContent = `
+            .act-box {
+                max-width: 560px; width: 100%;
+                text-align: center; padding: 40px 30px;
+                background: #060606;
+                box-shadow:
+                    0 -3px 0 0 var(--accent), 0 3px 0 0 var(--accent),
+                    -3px 0 0 0 var(--accent), 3px 0 0 0 var(--accent),
+                    0 0 60px rgba(255,255,0,0.15);
+                display: flex; flex-direction: column; gap: 16px;
+                animation: actZoom 0.5s ease;
+            }
+            @keyframes actZoom {
+                0% { transform: scale(0.85); opacity: 0; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+            .act-num {
+                font-size: 12px; letter-spacing: 6px; color: #888;
+                text-transform: uppercase;
+            }
+            .act-name {
+                font-size: 24px; letter-spacing: 4px; color: var(--accent);
+                font-weight: bold;
+                text-shadow: 0 0 20px rgba(255,255,0,0.5);
+                text-transform: uppercase;
+            }
+            .act-desc {
+                font-size: 13px; color: #bbb; line-height: 1.7;
+                max-width: 440px; margin: 0 auto;
+            }
+        `;
+        document.head.appendChild(s);
+    }
+    document.body.appendChild(overlay);
+
+    setTimeout(() => {
+        overlay.style.transition = 'opacity 0.4s ease';
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            overlay.remove();
+            callback();
+        }, 400);
+    }, 2200);
+}
+
+/* Переопределяем nextTurn — добавляем интро актов */
+const __originalNextTurn = nextTurn;
+nextTurn = function() {
+    GameState.turn++;
+
+    // проверка нового акта
+    const newAct = getActByTurn(GameState.turn);
+    const prevAct = getActByTurn(GameState.turn - 1);
+    if (newAct && prevAct && newAct.id !== prevAct.id) {
+        // смена акта — показываем интро
+        GameState.currentEvent = pickEvent();
+        showActIntro(newAct, () => {
+            renderEvent();
+        });
+        return;
+    }
+
+    if (GameState.turn > GameState.maxTurns || checkEnding()) {
+        GameState.finished = true;
+        renderEvent();
+        return;
+    }
+    GameState.currentEvent = pickEvent();
+    renderEvent();
+};
+
+/* ============================================================
+   ДИАЛОГИ СОВЕТНИКОВ
+   ============================================================ */
+
+/* Советники — свои для каждого «слоя» событий */
+const ADVISORS = [
+    { id: 'general',   name: 'Генерал Вэйл',    role: 'Военный советник',     color: '#ff6b35', lines: {
+        default: ['Нам нужно больше мечей, а не слов.', 'Солдаты ждут приказа. Не тяните.'],
+        war:     ['Люди наступают. Мы можем отбросить их — или потерять всё.', 'Каждое промедление стоит крови.'],
+        peace:   ['Мир? После того, что они сделали?', 'Дипломатия — оружие слабых. Так думают мои люди.']
+    }},
+    { id: 'sage',      name: 'Мудрец Орин',     role: 'Хранитель знаний',    color: '#33ccff', lines: {
+        default: ['В древних свитках есть ответ. Возможно.', 'Каждое решение — узел в ткани судьбы.'],
+        war:     ['Огонь войны пожирает и победителей.', 'Помните: даже сильные падают.'],
+        peace:   ['Мир — редкая драгоценность. Не разбрасывайтесь им.', 'Слова иногда сильнее мечей.']
+    }},
+    { id: 'spy',       name: 'Тень',            role: 'Глава разведки',       color: '#8844ff', lines: {
+        default: ['Я знаю то, чего не знают другие.', 'У стен есть уши. И у ушей — ножи.'],
+        war:     ['Враг близко. Ближе, чем вы думаете.', 'Смерть ходит рядом. Не оборачивайтесь.'],
+        peace:   ['Доверие — роскошь. Сейчас её нет.', 'Каждый союзник может стать врагом.']
+    }},
+    { id: 'mother',    name: 'Леди Ашера',      role: 'Советник по делам двора', color: '#ff66aa', lines: {
+        default: ['Двор шепчется. Слушайте.', 'Ваша власть — хрупкая, как стекло.'],
+        war:     ['Война — время возможностей. Для тех, кто смел.', 'Пока мужчины гибнут, женщины правят.'],
+        peace:   ['Мир может быть выгоднее войны. Если правильно продать его.', 'Двор примет любое решение — если оно выгодно.']
+    }}
+];
+
+/* Определяем тему события для реплики советника */
+function eventTheme(ev) {
+    const id = ev.id || '';
+    if (id.includes('raid') || id.includes('charge') || id.includes('stand') || id.includes('rebellion') || id.includes('oath')) return 'war';
+    if (id.includes('emissary') || id.includes('meeting') || id.includes('diplomat')) return 'peace';
+    return 'default';
+}
+
+/* Случайный советник + реплика */
+function pickAdvisor(ev) {
+    const theme = eventTheme(ev);
+    const adv = ADVISORS[Math.floor(Math.random() * ADVISORS.length)];
+    const lines = adv.lines[theme] || adv.lines.default;
+    const line = lines[Math.floor(Math.random() * lines.length)];
+    return { advisor: adv, line };
+}
+
+/* Переопределяем renderEvent — добавляем блок советника */
+const __originalRenderEvent = renderEvent;
+renderEvent = function() {
+    if (GameState.finished) {
+        renderEnding();
+        return;
+    }
+    const ev = GameState.currentEvent;
+    if (!ev) return;
+
+    const { advisor, line } = pickAdvisor(ev);
+
+    const act = getActByTurn(GameState.turn);
+
+    gameUI.event.innerHTML = `
+        <div class="event-turn">
+            ${act.name} · Ход ${GameState.turn} / ${GameState.maxTurns}
+        </div>
+        <div class="advisor-block">
+            <div class="advisor-portrait" style="background: radial-gradient(circle at 32% 30%, ${advisor.color}, #000 75%);"></div>
+            <div class="advisor-bubble">
+                <div class="advisor-name" style="color:${advisor.color};">${advisor.name} <span class="advisor-role">— ${advisor.role}</span></div>
+                <div class="advisor-line">«${line}»</div>
+            </div>
+        </div>
+        <div class="event-title">${ev.title}</div>
+        <div class="event-desc">${ev.desc}</div>
+        <div class="event-choices">
+            ${ev.choices.map((ch, i) => {
+                const eff = Object.entries(ch.effects).map(([k, v]) => {
+                    const cls = v > 0 ? 'ec-pos' : v < 0 ? 'ec-neg' : '';
+                    const sign = v > 0 ? '+' : '';
+                    return `<span class="${cls}">${sign}${v} ${k}</span>`;
+                }).join(' ');
+                return `<button class="event-choice" data-choice="${i}">
+                    <span>${ch.text}</span>
+                    <span class="ec-eff">${eff}</span>
+                </button>`;
+            }).join('')}
+        </div>
+    `;
+
+    gameUI.event.querySelectorAll('.event-choice').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.choice);
+            applyChoice(ev.choices[idx]);
+        });
+    });
+
+    // добавляем стили советника
+    if (!document.getElementById('advisor-styles')) {
+        const s = document.createElement('style');
+        s.id = 'advisor-styles';
+        s.textContent = `
+            .advisor-block {
+                display: flex; gap: 12px; align-items: flex-start;
+                padding: 10px 12px;
+                background: rgba(255,255,255,0.02);
+                box-shadow: inset 0 0 0 1px #1a1a1a;
+                margin-bottom: 10px;
+            }
+            .advisor-portrait {
+                width: 42px; height: 42px; border-radius: 50%;
+                flex-shrink: 0;
+                box-shadow: 0 0 0 2px #000, 0 0 0 3px #333;
+                position: relative; overflow: hidden;
+            }
+            .advisor-portrait::after {
+                content: ''; position: absolute; inset: 0;
+                background: radial-gradient(circle at 32% 30%, rgba(255,255,255,0.4), transparent 50%);
+                mix-blend-mode: overlay;
+            }
+            .advisor-bubble { display: flex; flex-direction: column; gap: 4px; }
+            .advisor-name {
+                font-size: 11.5px; font-weight: bold; letter-spacing: 1px;
+            }
+            .advisor-role { color: #666; font-weight: normal; font-size: 10.5px; }
+            .advisor-line {
+                font-size: 12px; color: #ccc; font-style: italic; line-height: 1.5;
+            }
+        `;
+        document.head.appendChild(s);
+    }
+};
+
+/* ============================================================
+   ПРИМЕНЕНИЕ СЛОЖНОСТИ К ЭФФЕКТАМ
+   ============================================================ */
+
+const __originalApplyChoice2 = applyChoice;
+applyChoice = function(choice) {
+    // модифицируем эффекты под сложность
+    const mult = DIFFICULTY[chosenDifficulty].mult;
+    const modified = {
+        ...choice,
+        effects: {},
+        result: choice.result
+    };
+    for (const [k, v] of Object.entries(choice.effects)) {
+        // положительные эффекты при лёгкой сложности — усилить,
+        // отрицательные — ослабить; при жестокой — наоборот
+        let finalV = v;
+        if (v > 0) {
+            finalV = Math.round(v * (chosenDifficulty === 'easy' ? 1.3 : chosenDifficulty === 'hard' ? 0.8 : 1));
+        } else if (v < 0) {
+            finalV = Math.round(v * mult);
+        }
+        modified.effects[k] = finalV;
+    }
+    __originalApplyChoice2(modified);
+};
+
+/* ============================================================
+   СТАРТОВЫЕ БОНУСЫ С УЧЁТОМ СЛОЖНОСТИ
+   ============================================================ */
+
+const __originalApplyStartBonuses = applyStartBonuses;
+applyStartBonuses = function() {
+    const base = __originalApplyStartBonuses();
+    const diff = DIFFICULTY[chosenDifficulty];
+    ['hope', 'unity', 'souls'].forEach(k => {
+        base[k] = Math.max(0, Math.min(100, base[k] + diff.startBonus));
+    });
+    return base;
+};
+
+/* ============================================================
+   ИНТРО ПЕРВОГО АКТА
+   ============================================================ */
+
+const __originalStartGame2 = startGame;
+startGame = function() {
+    __originalStartGame2();
+    // после старта — интро первого акта
+    setTimeout(() => {
+        showActIntro(ACTS[0], () => {
+            // экран уже отрисован
+        });
+    }, 200);
+};
+
+/* ============================================================
+   ФИНАЛ С УЧЁТОМ АКТОВ
+   ============================================================ */
+
+const __originalRenderEnding2 = renderEnding;
+renderEnding = function() {
+    __originalRenderEnding2();
+
+    // добавляем инфу о сложности и актах
+    const extra = document.createElement('div');
+    extra.style.cssText = `
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px dashed #1a1a1a;
+        font-size: 11px;
+        color: #666;
+        text-align: center;
+        letter-spacing: 0.5px;
+    `;
+    extra.innerHTML = `
+        Сложность: <span style="color:#aaa;">${DIFFICULTY[chosenDifficulty].name}</span>
+        · Дошли до: <span style="color:#aaa;">${getActByTurn(GameState.turn).name}</span>
+    `;
+    gameUI.event.appendChild(extra);
+};
+
+/* ============================================================
+   ИНИЦИАЛИЗАЦИЯ
+   ============================================================ */
+console.log('%c Dreemurr Dynasty — Act system + Advisors + Difficulty ', 'background:#ff0; color:#000; font-weight:bold; padding:4px 8px;');
+console.log('%c 3 акта · 4 советника · 3 сложности ', 'color:#888;');
+</script>
+<script>
+/* ============================================================
+   СОХРАНЕНИЕ ПРОГРЕССА ПОСРЕДИ ИГРЫ
+   ============================================================ */
+
+const SAVE_KEY = 'dreemurr_progress';
+
+/* Сохранить текущее состояние игры */
+function saveProgress() {
+    if (!GameState.character) return;
+    const data = {
+        turn: GameState.turn,
+        resources: GameState.resources,
+        log: GameState.log,
+        history: GameState.history || [],
+        finished: GameState.finished,
+        character: {
+            origin: state.origin,
+            gender: state.gender,
+            role: state.role,
+            age: state.age
+        },
+        difficulty: chosenDifficulty,
+        eventId: GameState.currentEvent ? GameState.currentEvent.id : null,
+        savedAt: Date.now()
+    };
+    try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    } catch (e) { /* ignore */ }
+}
+
+/* Загрузить прогресс */
+function loadProgress() {
+    try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch (e) {
+        return null;
+    }
+}
+
+/* Автосохранение после каждого хода */
+const __originalApplyChoice3 = applyChoice;
+applyChoice = function(choice) {
+    __originalApplyChoice3(choice);
+    saveProgress();
+};
+
+/* ============================================================
+   УНИКАЛЬНЫЕ ЭПИЛОГИ ДЛЯ КАЖДОЙ РОЛИ
+   ============================================================ */
+
+const ROLE_EPILOGUES = {
+    asgore_proto: {
+        good: 'Вы стали легендой — Хранителем, что удержал Очаг в самые тёмные дни. Огонь вашей магии согревает монстров и по сей день.',
+        bad:  'Очаг погас. Ваши подданные вспоминают вас с горечью — как того, кто не смог удержать пламя.',
+        neutral: 'Вы прошли войну, не потеряв себя. Но Очаг ещё не разгорелся в полную силу.'
+    },
+    prince_avant: {
+        good: 'Ваше имя вписано в песни. Молодой принц, что вёл армию в бой и вернулся с победой. Монстры видят в вас будущего короля.',
+        bad:  'Вы пали в бою — но не от меча, а от собственной гордыни. Ваши вылазки стоили слишком многого.',
+        neutral: 'Вы живы, но шрамы остались. Армия уважает вас. Двор — ещё нет.'
+    },
+    exile_general: {
+        good: 'Переворот удался. Вы стоите у трона — пусть и не на нём. Монстры знают: ваша рука твёрже, чем у прежнего короля.',
+        bad:  'Ваш мятеж провалился. Имя ваше предано забвению, а тело — земле.',
+        neutral: 'Вы ждали своего часа. И, возможно, дождётесь. Но война ещё не кончена.'
+    },
+    border_knight: {
+        good: 'Ваш рубеж выстоял. Столица обязана вам жизнью. Отныне «Рыцарь Окраин» — титул, который произносят с трепетом.',
+        bad:  'Фронт прорван. Вы сделали всё, что могли — но этого не хватило. Монстры запомнят вашу стойкость.',
+        neutral: 'Вы держите границу. Она ещё не пала — но и не укрепилась.'
+    },
+    queen_strategist: {
+        good: 'Ваша логистика спасла армию. Без вас война была бы проиграна в первый месяц. Совет склоняется перед вашей чашей.',
+        bad:  'Ресурсы иссякли. Ваши расчёты не учли человеческой жестокости. Двор винит вас — и не без оснований.',
+        neutral: 'Вы держите баланс. Пока — держите.'
+    },
+    chief_diplomat: {
+        good: 'Вы добились перемирия. Не мира — но первого шага к нему. Люди и монстры впервые за годы сели за один стол.',
+        bad:  'Переговоры провалились. Ваши враги используют это против вас. Но вы хотя бы пытались.',
+        neutral: 'Дипломатия — долгий путь. Вы сделали несколько шагов. Война сделала больше.'
+    },
+    shadow_mother: {
+        good: 'Ваши дети живы. Ваши враги мертвы. Вы правите из тени — и тень эта надёжнее трона.',
+        bad:  'Интриги запутались в собственной паутине. Ваше имя шепчут с презрением. Тень поглотила вас.',
+        neutral: 'Двор всё ещё плетёт интриги. Вы — в их числе. Пока живы.'
+    },
+    rebel_warrior: {
+        good: 'Король пал. Вы заняли его место — по праву силы, как и обещали. Монстры видят в вас новую эру.',
+        bad:  'Мятеж подавлен. Ваше имя вычеркнуто из хроник. Но легенды о вас будут жить.',
+        neutral: 'Вы живы. Знамя не поднято. Но и не опущено.'
+    }
+};
+
+/* Определяем, какая концовка */
+function getEndingType() {
+    const r = GameState.resources;
+    if (r.hope >= 80 && r.unity >= 80 && r.souls >= 80) return 'good';
+    if (r.hope <= 20 || r.unity <= 20 || r.souls <= 20) return 'bad';
+    return 'neutral';
+}
+
+/* Расширенный финал с эпилогом роли */
+const __originalRenderEnding3 = renderEnding;
+renderEnding = function() {
+    __originalRenderEnding3();
+
+    const role = state.role;
+    const epilogue = ROLE_EPILOGUES[role];
+    if (!epilogue) return;
+
+    const endingType = getEndingType();
+    const epilogueText = epilogue[endingType];
+
+    const epBox = document.createElement('div');
+    epBox.style.cssText = `
+        margin-top: 16px;
+        padding: 16px 18px;
+        background: rgba(255,255,0,0.03);
+        box-shadow: inset 0 0 0 1px #2a2a2a, inset 0 0 0 3px #000, inset 0 0 0 4px #2a2a2a;
+        font-size: 12.5px;
+        line-height: 1.7;
+        color: #ccc;
+        text-align: left;
+    `;
+    epBox.innerHTML = `
+        <div style="font-size:10px; letter-spacing:2px; color:#666; text-transform:uppercase; margin-bottom:8px;">
+            Эпилог
+        </div>
+        <div style="font-style:italic;">${epilogueText}</div>
+    `;
+
+    // вставляем эпилог перед финальной статистикой
+    const stats = gameUI.event.querySelector('.end-stats');
+    if (stats) {
+        stats.parentNode.insertBefore(epBox, stats);
+    } else {
+        gameUI.event.appendChild(epBox);
+    }
+};
+
+/* Очистка сохранения при рестарте */
+const __originalRestartHandler = document.getElementById('restart')?.onclick;
+document.addEventListener('click', (e) => {
+    if (e.target && (e.target.id === 'restart' || e.target.id === 'ending-restart')) {
+        localStorage.removeItem(SAVE_KEY);
+        localStorage.removeItem('dreemurr_character');
+    }
+}, true);
+
+/* ============================================================
+   ЭКРАН «ПРОДОЛЖИТЬ ИГРУ» ПРИ СТАРТЕ
+   ============================================================ */
+
+(function showContinuePrompt() {
+    const saved = loadProgress();
+    if (!saved || saved.finished) return;
+
+    // Показываем мини-баннер в углу
+    const banner = document.createElement('div');
+    banner.id = 'continue-banner';
+    banner.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 14000;
+        background: #0a0a0a;
+        padding: 12px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-width: 260px;
+        box-shadow:
+            0 -2px 0 0 var(--accent), 0 2px 0 0 var(--accent),
+            -2px 0 0 0 var(--accent), 2px 0 0 0 var(--accent),
+            0 0 20px rgba(255,255,0,0.15);
+        animation: slideIn 0.4s ease;
+    `;
+    if (!document.getElementById('continue-styles')) {
+        const s = document.createElement('style');
+        s.id = 'continue-styles';
+        s.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(120%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            #continue-banner .cb-title {
+                font-size: 11px;
+                letter-spacing: 2px;
+                color: var(--accent);
+                text-transform: uppercase;
+                font-weight: bold;
+            }
+            #continue-banner .cb-info {
+                font-size: 11px;
+                color: #aaa;
+                line-height: 1.5;
+            }
+            #continue-banner .cb-buttons {
+                display: flex;
+                gap: 6px;
+                margin-top: 4px;
+            }
+            #continue-banner button {
+                background: transparent;
+                font-family: inherit;
+                font-size: 11px;
+                padding: 6px 10px;
+                cursor: pointer;
+                letter-spacing: 1px;
+                color: var(--accent);
+                box-shadow:
+                    0 -1px 0 0 var(--accent), 0 1px 0 0 var(--accent),
+                    -1px 0 0 0 var(--accent), 1px 0 0 0 var(--accent);
+            }
+            #continue-banner button:hover {
+                background: var(--accent);
+                color: #000;
+            }
+            #continue-banner button.cb-dismiss {
+                color: #666;
+                box-shadow:
+                    0 -1px 0 0 #444, 0 1px 0 0 #444,
+                    -1px 0 0 0 #444, 1px 0 0 0 #444;
+            }
+            #continue-banner button.cb-dismiss:hover {
+                background: #444;
+                color: #fff;
+            }
+        `;
+        document.head.appendChild(s);
+    }
+    banner.innerHTML = `
+        <div class="cb-title">↻ Незавершённая война</div>
+        <div class="cb-info">
+            Ход ${saved.turn} · ${saved.character.role}
+        </div>
+        <div class="cb-buttons">
+            <button id="cb-continue">Продолжить</button>
+            <button id="cb-dismiss" class="cb-dismiss">×</button>
+        </div>
+    `;
+    document.body.appendChild(banner);
+
+    document.getElementById('cb-continue').addEventListener('click', () => {
+        AudioEngine.confirm();
+        resumeGame(saved);
+        banner.remove();
+    });
+    document.getElementById('cb-dismiss').addEventListener('click', () => {
+        AudioEngine.hover();
+        banner.remove();
+    });
+})();
+
+/* Восстановить игру из сохранения */
+function resumeGame(saved) {
+    // восстановить state персонажа
+    state.origin = saved.character.origin;
+    state.gender = saved.character.gender;
+    state.role   = saved.character.role;
+    state.age    = saved.character.age;
+    chosenDifficulty = saved.difficulty || 'normal';
+
+    // восстановить GameState
+    GameState.turn = saved.turn;
+    GameState.resources = saved.resources;
+    GameState.log = saved.log || [];
+    GameState.history = saved.history || [];
+    GameState.finished = false;
+
+    // восстановить персонажа
+    GameState.character = {
+        origin: ORIGINS.find(o => o.id === state.origin),
+        gender: GENDERS.find(g => g.id === state.gender),
+        role:   ROLES.find(r => r.id === state.role),
+        age:    AGES.find(a => a.id === state.age)
+    };
+
+    // восстановить событие
+    if (saved.eventId) {
+        GameState.currentEvent = EVENTS.find(e => e.id === saved.eventId)
+            || Object.values(ROLE_EVENTS).flat().find(e => e.id === saved.eventId)
+            || pickEvent();
+    } else {
+        GameState.currentEvent = pickEvent();
+    }
+
+    // отрисовка
+    renderCharacter();
+    renderResources();
+    renderLog();
+    renderEvent();
+    goTo('game');
+}
+
+/* ============================================================
+   ФИНАЛЬНАЯ ИНИЦИАЛИЗАЦИЯ
+   ============================================================ */
+console.log('%c Dreemurr Dynasty — FULL VERSION ', 'background:#ff0; color:#000; font-weight:bold; padding:6px 12px; font-size:12px;');
+console.log('%c ✓ Character creation ', 'color:#6f6;');
+console.log('%c ✓ 3 difficulty levels ', 'color:#6f6;');
+console.log('%c ✓ 3 acts, 8 role-specific events ', 'color:#6f6;');
+console.log('%c ✓ 4 advisors with context lines ', 'color:#6f6;');
+console.log('%c ✓ Save / continue ', 'color:#6f6;');
+console.log('%c ✓ Unique epilogues ', 'color:#6f6;');
+console.log('%c Играйте и получайте удовольствие! ', 'color:#ff0; font-weight:bold;');
+</script>
