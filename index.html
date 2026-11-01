@@ -5,835 +5,412 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dreemurr Dynasty</title>
 <style>
-    :root {
-        --bg: #050505; --fg: #fff; --accent: #ff0; --accent-dim: #aa0;
-        --dim: #777; --panel: #0b0b0b; --border: #fff; --heart: #ff0;
-        --danger: #f33; --font: 'Courier New', Courier, monospace; --px: 4px;
+    /* ============================================================
+       СТИЛИ ДРЕВА И КАРТЫ (DYNASTY)
+       ============================================================ */
+    .dyn-header {
+        display: flex; justify-content: space-between; align-items: center;
+        padding-bottom: 12px; border-bottom: 1px dashed #333; flex-wrap: wrap; gap: 10px;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; }
-    body {
-        background: radial-gradient(ellipse at 50% 0%, rgba(255,255,0,0.04), transparent 60%), radial-gradient(ellipse at 50% 100%, rgba(255,255,255,0.03), transparent 60%), var(--bg);
-        color: var(--fg); font-family: var(--font); min-height: 100vh;
-        display: flex; justify-content: center; align-items: center;
-        padding: 24px 16px; line-height: 1.45;
-        -webkit-font-smoothing: none; image-rendering: pixelated; position: relative;
+    .dyn-age { font-size: 14px; color: var(--accent); letter-spacing: 2px; }
+    .dyn-health-container { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+    .dyn-health-bar {
+        width: 120px; height: 12px; background: #111; border: 1px solid #333;
+        padding: 2px; display: flex; gap: 2px;
     }
-    body::before { content: ''; position: fixed; inset: 0; pointer-events: none; background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px); z-index: 9999; mix-blend-mode: overlay; }
-    body::after { content: ''; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%); z-index: 9998; }
+    .dyn-health-fill {
+        height: 100%; background: #6f6; box-shadow: 0 0 8px #6f6; transition: width 0.3s;
+    }
+    .dyn-tabs { display: flex; gap: 8px; margin: 16px 0; }
+    .dyn-tab {
+        flex: 1; background: #060606; color: #666; font-family: inherit;
+        font-size: 12px; padding: 12px; cursor: pointer; border: none;
+        text-transform: uppercase; letter-spacing: 2px;
+        box-shadow: 0 -2px 0 0 #1a1a1a, 0 2px 0 0 #1a1a1a, -2px 0 0 0 #1a1a1a, 2px 0 0 0 #1a1a1a;
+    }
+    .dyn-tab:hover { color: #aaa; }
+    .dyn-tab.active {
+        color: var(--accent); background: rgba(255,255,0,0.05);
+        box-shadow: 0 -2px 0 0 var(--accent), 0 2px 0 0 var(--accent), -2px 0 0 0 var(--accent), 2px 0 0 0 var(--accent);
+    }
 
-    #app { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 18px; position: relative; z-index: 1; }
-    
-    .steps-bar { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 4px; }
-    .step-pip { font-size: 10px; letter-spacing: 2px; padding: 6px 14px; color: #444; text-transform: uppercase; background: #0a0a0a; box-shadow: 0 -2px 0 0 #222, 0 2px 0 0 #222, -2px 0 0 0 #222, 2px 0 0 0 #222; }
-    .step-pip.done { color: var(--accent-dim); box-shadow: 0 -2px 0 0 var(--accent-dim), 0 2px 0 0 var(--accent-dim), -2px 0 0 0 var(--accent-dim), 2px 0 0 0 var(--accent-dim); }
-    .step-pip.current { color: var(--accent); text-shadow: 0 0 10px rgba(255,255,0,0.7); box-shadow: 0 -2px 0 0 var(--accent), 0 2px 0 0 var(--accent), -2px 0 0 0 var(--accent), 2px 0 0 0 var(--accent), 0 0 20px rgba(255,255,0,0.25); }
+    /* ДРЕВО */
+    .tree-container {
+        display: flex; flex-direction: column; align-items: center;
+        gap: 20px; padding: 20px; background: #050505;
+        box-shadow: inset 0 0 0 1px #1a1a1a; min-height: 300px;
+    }
+    .tree-row { display: flex; gap: 20px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+    .tree-node {
+        display: flex; flex-direction: column; align-items: center;
+        gap: 6px; width: 80px; cursor: pointer; transition: transform 0.2s;
+    }
+    .tree-node:hover { transform: scale(1.05); }
+    .tree-portrait {
+        width: 50px; height: 50px; border-radius: 50%;
+        box-shadow: 0 0 0 2px #000, 0 0 0 3px #444; position: relative;
+    }
+    .tree-node.heir .tree-portrait {
+        box-shadow: 0 0 0 2px #000, 0 0 0 3px var(--accent), 0 0 15px var(--accent);
+    }
+    .tree-node.dead .tree-portrait { filter: grayscale(1) brightness(0.3); }
+    .tree-node.dead .tree-name { text-decoration: line-through; color: #555; }
+    .tree-name { font-size: 11px; text-align: center; color: #ccc; }
+    .tree-status { font-size: 9px; color: #666; text-align: center; }
+    .tree-line-v { width: 2px; height: 20px; background: #333; margin: 0 auto; }
 
-    .screen { background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent 30%), var(--panel); padding: 30px 32px; display: none; flex-direction: column; gap: 22px; position: relative; min-height: 460px; box-shadow: 0 -3px 0 0 var(--border), 0 3px 0 0 var(--border), -3px 0 0 0 var(--border), 3px 0 0 0 var(--border), 0 0 60px rgba(255,255,255,0.03) inset; }
-    .screen.active { display: flex; animation: fadeIn 0.22s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    /* КАРТА */
+    .map-container {
+        height: 300px; background: #050505;
+        box-shadow: inset 0 0 0 1px #1a1a1a;
+        position: relative; overflow: hidden;
+        background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+        background-size: 30px 30px;
+    }
+    .map-node {
+        position: absolute; width: 40px; height: 40px;
+        transform: translate(-50%, -50%); cursor: pointer;
+        display: flex; flex-direction: column; align-items: center;
+    }
+    .map-icon {
+        width: 24px; height: 24px; border-radius: 50%;
+        box-shadow: 0 0 0 2px #000, 0 0 0 3px #666; transition: all 0.2s;
+    }
+    .map-node:hover .map-icon {
+        box-shadow: 0 0 0 2px #000, 0 0 0 3px var(--accent), 0 0 15px var(--accent); transform: scale(1.1);
+    }
+    .map-label { font-size: 9px; color: #888; margin-top: 4px; white-space: nowrap; text-shadow: 1px 1px 0 #000; }
 
-    .screen-title { font-size: 17px; letter-spacing: 6px; text-transform: uppercase; color: var(--accent); text-align: center; padding-bottom: 14px; text-shadow: 0 0 14px rgba(255,255,0,0.55); position: relative; }
-    .screen-title::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 70%; height: 2px; background: linear-gradient(90deg, transparent, #333, transparent); }
-    .screen-sub { font-size: 12px; color: var(--dim); text-align: center; letter-spacing: 1.5px; margin-top: -10px; line-height: 1.5; }
+    .info-panel {
+        background: #080808; padding: 16px;
+        box-shadow: inset 0 0 0 1px #222;
+        margin-top: 16px; font-size: 12px; min-height: 100px;
+    }
+    .info-panel .panel-title { font-size: 14px; color: var(--accent); margin-bottom: 8px; }
+    .info-panel .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .info-panel .stat-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #222; padding-bottom: 4px; }
+    .info-panel .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    .option-list { display: flex; flex-direction: column; gap: 8px; max-width: 600px; margin: 0 auto; width: 100%; }
-    .option { display: flex; align-items: flex-start; gap: 14px; padding: 12px 16px; cursor: pointer; background: transparent; text-align: left; color: var(--fg); font-family: inherit; font-size: 14px; width: 100%; box-shadow: 0 -2px 0 0 transparent, 0 2px 0 0 transparent, -2px 0 0 0 transparent, 2px 0 0 0 transparent; }
-    .option:hover { background: rgba(255,255,255,0.025); box-shadow: 0 -2px 0 0 #444, 0 2px 0 0 #444, -2px 0 0 0 #444, 2px 0 0 0 #444; }
-    .option.selected { background: rgba(255,255,0,0.06); box-shadow: 0 -2px 0 0 var(--accent), 0 2px 0 0 var(--accent), -2px 0 0 0 var(--accent), 2px 0 0 0 var(--accent); }
-    .option .heart { color: var(--heart); font-size: 18px; opacity: 0; transition: opacity 0.1s; }
-    .option.selected .heart { opacity: 1; animation: heartBeat 0.8s infinite; }
-    @keyframes heartBeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
-    .option .opt-body { display: flex; flex-direction: column; gap: 4px; }
-    .option .opt-name { font-weight: bold; letter-spacing: 1px; font-size: 14px; }
-    .option .opt-desc { font-size: 12px; color: #999; }
-
-    .role-layout { display: grid; grid-template-columns: 300px 1fr; gap: 18px; }
-    .role-list { display: flex; flex-direction: column; gap: 6px; max-height: 420px; overflow-y: auto; }
-    .role-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; background: #080808; font-family: inherit; font-size: 12.5px; width: 100%; box-shadow: 0 -2px 0 0 #1e1e1e, 0 2px 0 0 #1e1e1e, -2px 0 0 0 #1e1e1e, 2px 0 0 0 #1e1e1e; }
-    .role-item.active { background: rgba(255,255,0,0.06); box-shadow: 0 -2px 0 0 var(--accent), 0 2px 0 0 var(--accent), -2px 0 0 0 var(--accent), 2px 0 0 0 var(--accent); }
-    .role-item.disabled { opacity: 0.18; cursor: not-allowed; filter: grayscale(1); }
-    .role-detail { background: #090909; padding: 20px 22px; display: flex; flex-direction: column; gap: 16px; min-height: 420px; box-shadow: 0 -3px 0 0 #2a2a2a, 0 3px 0 0 #2a2a2a, -3px 0 0 0 #2a2a2a, 3px 0 0 0 #2a2a2a; }
-    
-    .age-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
-    .age-btn { background: #080808; color: var(--fg); font-family: inherit; padding: 16px 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; box-shadow: 0 -2px 0 0 #1e1e1e, 0 2px 0 0 #1e1e1e, -2px 0 0 0 #1e1e1e, 2px 0 0 0 #1e1e1e; }
-    .age-btn.selected { background: rgba(255,255,0,0.06); box-shadow: 0 -2px 0 0 var(--accent), 0 2px 0 0 var(--accent), -2px 0 0 0 var(--accent), 2px 0 0 0 var(--accent); }
-
-    .nav-row { display: flex; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 16px; border-top: 1px solid #1a1a1a; }
-    .nav-btn { background: transparent; font-family: inherit; font-size: 13px; padding: 12px 28px; cursor: pointer; letter-spacing: 3px; text-transform: uppercase; }
-    .nav-btn.back { color: #aaa; box-shadow: 0 -2px 0 0 #555, 0 2px 0 0 #555, -2px 0 0 0 #555, 2px 0 0 0 #555; }
-    .nav-btn.next { color: var(--accent); box-shadow: 0 -2px 0 0 var(--accent), 0 2px 0 0 var(--accent), -2px 0 0 0 var(--accent), 2px 0 0 0 var(--accent); margin-left: auto; }
-    .nav-btn.next:hover:not(:disabled) { background: var(--accent); color: #000; }
-    .nav-btn:disabled { opacity: 0.18; cursor: not-allowed; }
-
-    .review-box { display: flex; gap: 28px; align-items: center; justify-content: center; flex-wrap: wrap; }
-    .review-avatar { width: 130px; height: 130px; border-radius: 50%; box-shadow: 0 0 0 3px #000, 0 0 0 5px var(--accent); }
-    .review-details { display: flex; flex-direction: column; gap: 8px; flex: 1; max-width: 380px; }
-    .review-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #222; padding-bottom: 7px; font-size: 13px; }
-
-    /* Стили для Древа и Игры */
-    .dyn-top { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid #1a1a1a; }
-    .dyn-worlds { display: flex; gap: 6px; margin: 14px 0; }
-    .dyn-world-tab { flex: 1; background: #060606; border: none; color: #666; font-family: inherit; font-size: 11px; padding: 10px 6px; cursor: pointer; text-transform: uppercase; box-shadow: 0 -2px 0 0 #1e1e1e, 0 2px 0 0 #1e1e1e, -2px 0 0 0 #1e1e1e, 2px 0 0 0 #1e1e1e; display: flex; flex-direction: column; align-items: center; }
-    .dyn-world-tab.active { color: var(--accent); background: rgba(255,255,0,0.05); box-shadow: 0 -2px 0 0 var(--accent), 0 2px 0 0 var(--accent), -2px 0 0 0 var(--accent), 2px 0 0 0 var(--accent); }
-    .dyn-content { flex: 1; display: flex; flex-direction: column; gap: 12px; min-height: 380px; }
-    .dyn-drama { font-size: 11.5px; max-height: 120px; overflow-y: auto; padding: 8px 12px; background: #050505; box-shadow: inset 0 0 0 1px #1a1a1a; }
-    
-    .dtp-action { background: transparent; color: var(--fg); font-family: inherit; font-size: 11px; padding: 6px 12px; cursor: pointer; box-shadow: 0 -1px 0 0 #444, 0 1px 0 0 #444, -1px 0 0 0 #444, 1px 0 0 0 #444; }
-    .dtp-action.primary { color: var(--accent); box-shadow: 0 -1px 0 0 var(--accent), 0 1px 0 0 var(--accent), -1px 0 0 0 var(--accent), 1px 0 0 0 var(--accent); }
-
-    /* Графика древа */
-    .tree-node { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 90px; cursor: pointer; position: relative; }
-    .tree-portrait { width: 54px; height: 54px; border-radius: 50%; box-shadow: 0 0 0 2px #000, 0 0 0 3px #444; }
-    .tree-node.heir .tree-portrait { box-shadow: 0 0 0 2px #000, 0 0 0 3px var(--accent), 0 0 16px rgba(255,255,0,0.5); }
-    .tree-node.dead .tree-portrait { filter: grayscale(1) brightness(0.4); }
-    .tree-node.dead .tree-name { text-decoration: line-through; color: #666; }
-    .tree-name { font-size: 10.5px; color: #ccc; text-align: center; }
-    
-    @media (max-width: 720px) { .role-layout { grid-template-columns: 1fr; } .game-top { grid-template-columns: 1fr; } }
+    .log-panel {
+        font-size: 11px; max-height: 100px; overflow-y: auto;
+        background: #050505; padding: 10px; box-shadow: inset 0 0 0 1px #1a1a1a;
+        margin-top: 16px; color: #888;
+    }
+    .log-entry { border-bottom: 1px dashed #111; padding: 3px 0; }
+    .log-entry.danger { color: #f66; }
+    .log-entry.love { color: #f6a; }
+    .log-entry.death { color: #888; }
 </style>
 </head>
 <body>
 <div id="app">
-    <div class="steps-bar" id="steps-bar"></div>
-    
-    <!-- Шаги создания -->
-    <div class="screen" id="step-origin">
-        <div class="screen-title">Происхождение</div>
-        <div class="screen-sub">Кем вы приходитесь правящей семье Дриммурров?</div>
-        <div class="option-list" id="origin-list"></div>
-        <div class="nav-row"><button class="nav-btn back" disabled>← Назад</button><button class="nav-btn next" id="next-origin" disabled>Далее →</button></div>
-    </div>
-    <div class="screen" id="step-gender">
-        <div class="screen-title">Пол</div>
-        <div class="screen-sub">Выберите пол вашего персонажа</div>
-        <div class="option-list" id="gender-list"></div>
-        <div class="nav-row"><button class="nav-btn back" id="back-gender">← Назад</button><button class="nav-btn next" id="next-gender" disabled>Далее →</button></div>
-    </div>
-    <div class="screen" id="step-role">
-        <div class="screen-title">Роль</div>
-        <div class="screen-sub">Ваше место в войне людей и монстров</div>
-        <div class="role-layout"><div class="role-list" id="roles-list"></div><div class="role-detail" id="role-detail"></div></div>
-        <div class="nav-row"><button class="nav-btn back" id="back-role">← Назад</button><button class="nav-btn next" id="next-role" disabled>Далее →</button></div>
-    </div>
-    <div class="screen" id="step-age">
-        <div class="screen-title">Возраст</div>
-        <div class="screen-sub">Сколько вам лет на момент начала войны?</div>
-        <div class="age-grid" id="age-grid"></div>
-        <div class="nav-row"><button class="nav-btn back" id="back-age">← Назад</button><button class="nav-btn next" id="next-age" disabled>Далее →</button></div>
-    </div>
-    <div class="screen" id="step-review">
-        <div class="screen-title">Подтверждение</div>
-        <div class="screen-sub">Проверьте своего персонажа перед началом</div>
-        <div class="review-box"><div class="review-avatar" id="review-avatar"></div><div class="review-details" id="review-details"></div></div>
-        <div class="nav-row"><button class="nav-btn back" id="back-review">← Назад</button><button class="nav-btn next" id="start-game">Начать →</button></div>
-    </div>
-
-    <!-- Экран Династии (Древо) -->
-    <div class="screen" id="dynasty-screen">
-        <div class="dyn-top">
-            <div class="dyn-age">Род Дриммурров · <span id="dyn-age-years">20</span> лет</div>
-            <div class="dyn-health">Здоровье <div class="dyn-health-bar" id="dyn-health-bar"></div></div>
-            <div class="dyn-speed">
-                <button class="dtp-action" data-speed="0">❚❚</button>
-                <button class="dtp-action primary" data-speed="1">▶</button>
-                <button class="dtp-action" data-speed="2">▶▶</button>
+    <!-- ЭКРАН ДИНАСТИИ -->
+    <div class="screen px-box" id="screen-dynasty">
+        <div class="dyn-header">
+            <div class="dyn-age">Род Дриммурров · <span id="dyn-age">20</span> лет</div>
+            <div class="dyn-health-container">
+                Здоровье
+                <div class="dyn-health-bar"><div class="dyn-health-fill" id="dyn-health" style="width: 70%;"></div></div>
+            </div>
+            <div style="display: flex; gap: 4px;">
+                <button class="nav-btn" style="padding: 4px 8px; font-size: 10px;" onclick="setSpeed(0)">❚❚</button>
+                <button class="nav-btn next" style="padding: 4px 8px; font-size: 10px;" onclick="setSpeed(1)">▶</button>
+                <button class="nav-btn" style="padding: 4px 8px; font-size: 10px;" onclick="setSpeed(2)">▶▶</button>
             </div>
         </div>
-        <div class="dyn-worlds" id="dyn-worlds">
-            <button class="dyn-world-tab active" data-world="palace"><span>♛</span> Дворец</button>
-            <button class="dyn-world-tab" data-world="war"><span>⚔</span> Война</button>
-            <button class="dyn-world-tab" data-world="people"><span>♟</span> Граждане</button>
+        <div class="dyn-tabs">
+            <button class="dyn-tab active" data-tab="palace" onclick="switchTab('palace')">Дворец</button>
+            <button class="dyn-tab" data-tab="war" onclick="switchTab('war')">Война</button>
+            <button class="dyn-tab" data-tab="people" onclick="switchTab('people')">Граждане</button>
         </div>
-        <div class="dyn-content" id="dyn-content"></div>
-        <div class="dyn-drama" id="dyn-drama"></div>
+        <div id="dyn-content" style="flex: 1;"></div>
+        <div class="log-panel" id="dyn-log"></div>
         <div class="nav-row">
-            <button class="nav-btn back" id="dyn-back">← Назад</button>
-        </div>
-    </div>
-    
-    <!-- Обычный экран игры (оставлен для совместимости) -->
-    <div class="screen" id="game-screen">
-        <div class="screen-title" id="game-title">Война началась</div>
-        <div class="game-wrap">
-            <div class="game-top">
-                <div class="char-card"><div class="char-portrait" id="game-avatar"></div><div class="char-info" id="game-details"></div></div>
-                <div class="resources" id="game-resources"></div>
-            </div>
-            <div class="game-event" id="game-event"></div>
-            <div class="game-log" id="game-log"></div>
+            <button class="nav-btn" onclick="goTo('origin')">← В меню</button>
         </div>
     </div>
 </div>
-
-<script>
-// === БАЗОВЫЕ ДАННЫЕ ===
-const ORIGINS = [ { id: 'main_branch', name: 'Основная ветвь Дриммурров', desc: 'Прямой наследник престола.' }, { id: 'side_branch', name: 'Побочная ветвь', desc: 'Дальний родственник.' }, { id: 'bastard', name: 'Бастард', desc: 'Кровь есть, статуса нет.' }, { id: 'impoverished', name: 'Обедневшая ветвь', desc: 'Остались лишь имя и долги.' } ];
-const GENDERS = [ { id: 'male', name: 'Мужской', desc: 'Мужские роли.' }, { id: 'female', name: 'Женский', desc: 'Женские роли.' } ];
-const ROLES = [
-    { id: 'asgore_proto', name: 'Главнокомандующий', short: 'Хранитель Очага', gender: 'male', c1: '#ff6b35', c2: '#aa2200', stats: { Сила: 3, Магия: 5 } },
-    { id: 'prince_avant', name: 'Принц-Авангардист', short: 'Принц', gender: 'male', c1: '#ffcc00', c2: '#aa6600', stats: { Сила: 5, Магия: 3 } },
-    { id: 'exile_general', name: 'Опальный Генерал', short: 'Изгнанник', gender: 'male', c1: '#8844ff', c2: '#331188', stats: { Сила: 5, Магия: 2 } },
-    { id: 'border_knight', name: 'Рыцарь Окраин', short: 'Рыцарь', gender: 'male', c1: '#33aa77', c2: '#115533', stats: { Сила: 3, Защита: 5 } },
-    { id: 'queen_strategist', name: 'Королева-Стратег', short: 'Королева', gender: 'female', c1: '#ff66aa', c2: '#991155', stats: { Магия: 4, Харизма: 5 } },
-    { id: 'chief_diplomat', name: 'Главный Дипломат', short: 'Дипломат', gender: 'female', c1: '#33ccff', c2: '#116699', stats: { Магия: 5, Харизма: 5 } },
-    { id: 'shadow_mother', name: 'Теневая Мать', short: 'Интриган', gender: 'female', c1: '#777777', c2: '#222222', stats: { Харизма: 5, Защита: 3 } },
-    { id: 'rebel_warrior', name: 'Мятежная Воительница', short: 'Воительница', gender: 'female', c1: '#ff3355', c2: '#881122', stats: { Сила: 5, Харизма: 4 } }
-];
-const AGES = [ { id: 'young', label: 'Юный', range: '16–25', desc: 'Максимализм.' }, { id: 'adult', label: 'Зрелый', range: '26–40', desc: 'Расцвет сил.' }, { id: 'veteran', label: 'Ветеран', range: '41–60', desc: 'Мудрость.' }, { id: 'elder', label: 'Старейшина', range: '61+', desc: 'Легенда.' } ];
-
-const state = { origin: null, gender: null, role: null, age: null };
-let currentStep = 'origin';
-
-// === НАВИГАЦИЯ ===
-const screens = {
-    origin: document.getElementById('step-origin'), gender: document.getElementById('step-gender'),
-    role: document.getElementById('step-role'), age: document.getElementById('step-age'),
-    review: document.getElementById('step-review'), dynasty: document.getElementById('dynasty-screen'),
-    game: document.getElementById('game-screen')
-};
-
-function goTo(step) {
-    currentStep = step;
-    Object.values(screens).forEach(s => { if(s) s.classList.remove('active'); });
-    if (screens[step]) screens[step].classList.add('active');
-}
-
-// === РЕНДЕР ШАГОВ ===
-function renderOrigins() {
-    const list = document.getElementById('origin-list');
-    ORIGINS.forEach(o => {
-        const btn = document.createElement('button');
-        btn.className = 'option'; btn.innerHTML = `<span class="heart">♥</span><span class="opt-body"><span class="opt-name">${o.name}</span><span class="opt-desc">${o.desc}</span></span>`;
-        btn.onclick = () => {
-            state.origin = o.id;
-            document.querySelectorAll('#origin-list .option').forEach(el => el.classList.remove('selected'));
-            btn.classList.add('selected');
-            document.getElementById('next-origin').disabled = false;
-        };
-        list.appendChild(btn);
-    });
-}
-function renderGenders() {
-    const list = document.getElementById('gender-list');
-    GENDERS.forEach(g => {
-        const btn = document.createElement('button');
-        btn.className = 'option'; btn.innerHTML = `<span class="heart">♥</span><span class="opt-body"><span class="opt-name">${g.name}</span><span class="opt-desc">${g.desc}</span></span>`;
-        btn.onclick = () => {
-            state.gender = g.id;
-            document.querySelectorAll('#gender-list .option').forEach(el => el.classList.remove('selected'));
-            btn.classList.add('selected');
-            document.getElementById('next-gender').disabled = false;
-        };
-        list.appendChild(btn);
-    });
-}
-function renderRoles() {
-    const list = document.getElementById('roles-list');
-    list.innerHTML = '';
-    ROLES.filter(r => !state.gender || r.gender === state.gender).forEach(r => {
-        const item = document.createElement('button');
-        item.className = 'role-item';
-        item.innerHTML = `<span class="ri-name">${r.short}</span>`;
-        item.onclick = () => {
-            state.role = r.id;
-            document.querySelectorAll('.role-item').forEach(el => el.classList.remove('active'));
-            item.classList.add('active');
-            document.getElementById('next-role').disabled = false;
-            document.getElementById('role-detail').innerHTML = `<div style="color:var(--accent); font-size:16px;">${r.name}</div><div style="color:#aaa; margin-top:10px;">Выбранная роль</div>`;
-        };
-        list.appendChild(item);
-    });
-}
-function renderAges() {
-    const grid = document.getElementById('age-grid');
-    AGES.forEach(a => {
-        const btn = document.createElement('button');
-        btn.className = 'age-btn'; btn.innerHTML = `<span class="age-label">${a.label}</span><span class="age-range">${a.range}</span><span class="age-hint">${a.desc}</span>`;
-        btn.onclick = () => {
-            state.age = a.id;
-            document.querySelectorAll('.age-btn').forEach(el => el.classList.remove('selected'));
-            btn.classList.add('selected');
-            document.getElementById('next-age').disabled = false;
-        };
-        grid.appendChild(btn);
-    });
-}
-
-// === КНОПКИ ===
-document.getElementById('next-origin').onclick = () => goTo('gender');
-document.getElementById('next-gender').onclick = () => { renderRoles(); goTo('role'); };
-document.getElementById('next-role').onclick = () => goTo('age');
-document.getElementById('next-age').onclick = () => {
-    const o = ORIGINS.find(x => x.id === state.origin);
-    const g = GENDERS.find(x => x.id === state.gender);
-    const r = ROLES.find(x => x.id === state.role);
-    const a = AGES.find(x => x.id === state.age);
-    document.getElementById('review-details').innerHTML = `<div class="review-row"><span>Происхождение</span><span>${o.name}</span></div><div class="review-row"><span>Пол</span><span>${g.name}</span></div><div class="review-row"><span>Роль</span><span>${r.short}</span></div><div class="review-row"><span>Возраст</span><span>${a.label}</span></div>`;
-    document.getElementById('review-avatar').style.background = `radial-gradient(circle at 32% 30%, ${r.c1}, ${r.c2} 70%, #000)`;
-    goTo('review');
-};
-document.getElementById('back-gender').onclick = () => goTo('origin');
-document.getElementById('back-role').onclick = () => goTo('gender');
-document.getElementById('back-age').onclick = () => goTo('role');
-document.getElementById('back-review').onclick = () => goTo('age');
-
-renderOrigins(); renderGenders(); renderAges(); goTo('origin');
-</script>
 <script>
 /* ============================================================
-   ДВИЖОК ДРЕВА (СЕМЬЯ, ТЕРРИТОРИИ, ТРИ МИРА)
+   ДВИЖОК ДИНАСТИИ (СЕМЬЯ, ВРЕМЯ, ТЕРРИТОРИИ)
    ============================================================ */
-const DYNASTY_KEY = 'dreemurr_dynasty_save';
-
-const TERRITORIES = [
-    { id: 'capital', name: 'Столица', x: 50, y: 50, type: 'capital', income: 20, defense: 10, loyalty: 70, desc: 'Сердце королевства.' },
-    { id: 'north', name: 'Северный Хребет', x: 50, y: 18, type: 'mountain', income: 8, defense: 25, loyalty: 60, desc: 'Холодные пики.' },
-    { id: 'east', name: 'Восточные Пустоши', x: 80, y: 50, type: 'wasteland', income: 5, defense: 5, loyalty: 45, desc: 'Спорные земли.' },
-    { id: 'south', name: 'Южные Луга', x: 50, y: 82, type: 'fields', income: 15, defense: 8, loyalty: 75, desc: 'Житница.' },
-    { id: 'west', name: 'Западные Топи', x: 20, y: 50, type: 'swamp', income: 6, defense: 12, loyalty: 50, desc: 'Болота.' }
-];
-
-const GENDERS_LABEL = { male: 'Сын', female: 'Дочь' };
-const AGE_STAGES = [ { max: 3, name: 'Младенец' }, { max: 7, name: 'Ребёнок' }, { max: 14, name: 'Подросток' }, { max: 20, name: 'Юноша' }, { max: 60, name: 'Взрослый' }, { max: 999, name: 'Старик' } ];
-
 const Dynasty = {
-    age: 20, maxAge: 70, health: 70, timeScale: 1, tickInterval: null, minutesPerYear: 1.5,
-    spouses: [], children: [], heir: null,
-    territories: TERRITORIES.map(t => ({ ...t, ownerId: null, level: 1, resources: 10 })),
-    courtFavor: 50, peopleFavor: 50, armyFavor: 50,
-    currentWorld: 'palace',
-    dramaLog: [], scandals: 0, wars: 0,
-    started: false, finished: false, paused: false,
-    warState: { intensity: 30, enemyPressure: 20, frontLine: 'east', lastBattle: null, deserters: 0 },
-    peopleState: { treasury: 40, food: 50, unrest: 20, taxes: 'normal' }
+    age: 20, health: 70, timeSpeed: 1,
+    family: { spouses: [], children: [], heir: null },
+    territories: [
+        { id: 'capital', name: 'Столица', x: 50, y: 50, type: 'capital', color: '#ff0', income: 20, def: 10, loyalty: 80 },
+        { id: 'north', name: 'Северный Хребет', x: 50, y: 20, type: 'mountain', color: '#888', income: 10, def: 30, loyalty: 60 },
+        { id: 'east', name: 'Восточные Пустоши', x: 80, y: 50, type: 'wasteland', color: '#c96', income: 5, def: 5, loyalty: 40 },
+        { id: 'south', name: 'Южные Луга', x: 50, y: 80, type: 'fields', color: '#6f6', income: 15, def: 5, loyalty: 90 },
+        { id: 'west', name: 'Западные Топи', x: 20, y: 50, type: 'swamp', color: '#6a8', income: 8, def: 15, loyalty: 50 }
+    ],
+    logs: []
 };
 
-// === ГЕНЕРАЦИЯ СЕМЬИ ===
-let dynastyIdCounter = 1;
-function makeSpouse(name, status, love, fertility) { return { id: 'sp_' + (dynastyIdCounter++), name, love, fertility, status }; }
+let tickInterval = null;
 
-function initDynastyFamily() {
-    const isFemale = state.gender === 'female';
-    Dynasty.spouses = []; Dynasty.children = []; Dynasty.heir = null; Dynasty.dramaLog = []; Dynasty.scandals = 0;
-    Dynasty.age = state.age === 'young' ? 20 : state.age === 'adult' ? 32 : state.age === 'veteran' ? 48 : 64;
-    Dynasty.health = state.age === 'elder' ? 50 : 75;
-    Dynasty.maxAge = 70 + (state.age === 'elder' ? 10 : 0);
+function startDynasty() {
+    initFamily();
+    document.getElementById('dyn-age').textContent = Dynasty.age;
+    document.getElementById('dyn-health').style.width = Dynasty.health + '%';
+    goTo('dynasty');
+    switchTab('palace');
+    startTime();
+}
 
-    if (isFemale) {
-        Dynasty.spouses.push(makeSpouse('Лорд-консорт Эйден', 'wife', 60, 55));
-        Dynasty.spouses.push(makeSpouse('Фаворит Кейл', 'concubine', 40, 60));
+function initFamily() {
+    Dynasty.family.spouses = [];
+    Dynasty.family.children = [];
+    Dynasty.family.heir = null;
+    Dynasty.logs = [];
+    
+    if (state.gender === 'male') {
+        Dynasty.family.spouses.push({ id: 'sp1', name: 'Королева Ашера', status: 'wife', love: 70, fertility: 60 });
     } else {
-        Dynasty.spouses.push(makeSpouse('Королева Ашера', 'wife', 65, 70));
-        Dynasty.spouses.push(makeSpouse('Наложница Лисса', 'concubine', 45, 75));
+        Dynasty.family.spouses.push({ id: 'sp1', name: 'Лорд-консорт Эйден', status: 'wife', love: 70, fertility: 60 });
     }
-
-    const mother = Dynasty.spouses[0];
+    
     const childGender = Math.random() < 0.5 ? 'male' : 'female';
-    Dynasty.children.push({
-        id: 'child_start_' + (dynastyIdCounter++), name: (childGender === 'male' ? 'Принц Тор' : 'Принцесса Мира'),
-        gender: childGender, age: 8, health: 70, love: mother.love, motherId: mother.id, education: 'военное', status: 'alive', arrangedTo: null
+    const childName = childGender === 'male' ? 'Принц Тор' : 'Принцесса Мира';
+    Dynasty.family.children.push({
+        id: 'ch1', name: childName, gender: childGender, age: 5,
+        health: 80, love: 70, motherId: 'sp1', status: 'alive'
     });
-    Dynasty.heir = Dynasty.children[0].id;
-
-    Dynasty.territories.forEach(t => { t.resources = 10; t.ownerId = null; t.level = 1; });
-    Dynasty.warState = { intensity: 30, enemyPressure: 20, frontLine: 'east', lastBattle: null, deserters: 0 };
-    Dynasty.peopleState = { treasury: 40, food: 50, unrest: 20, taxes: 'normal' };
+    Dynasty.family.heir = 'ch1';
+    
+    addLog(`Вы взошли на трон. Двор приветствует вас.`, 'love');
 }
 
-// === ЛОГ ДРАМЫ ===
-function addDrama(text, type = 'love') {
-    Dynasty.dramaLog.push({ age: Dynasty.age, text, type });
-    if (Dynasty.dramaLog.length > 100) Dynasty.dramaLog.shift();
-    renderDramaLog();
-}
-function renderDramaLog() {
-    const box = document.getElementById('dyn-drama');
-    if (!box) return;
-    if (!Dynasty.dramaLog.length) { box.innerHTML = `<div style="color:#555;">— хроника двора пуста —</div>`; return; }
-    box.innerHTML = Dynasty.dramaLog.slice().reverse().map(l => `<div style="padding:3px 0; border-bottom:1px dashed #101010; color:${l.type==='danger'?'#f66':l.type==='death'?'#888':l.type==='betrayal'?'#f33':'#f6a'};"><span style="color:#555; margin-right:6px;">${l.age} лет</span>${l.text}</div>`).join('');
+function addLog(text, type = '') {
+    Dynasty.logs.push({ text, type });
+    if (Dynasty.logs.length > 50) Dynasty.logs.shift();
+    renderLog();
 }
 
-// === РЕНДЕР ДВОРЦА ===
-function renderPalace(content) {
-    content.innerHTML = `
-        <div style="display:flex; gap:6px; margin-bottom:10px;">
-            <button class="dtp-action primary" id="dyn-add-wife">+ Взять жену</button>
-            <button class="dtp-action" id="dyn-add-concubine">+ Взять наложницу</button>
-        </div>
-        <div style="background:#050505; padding:16px; box-shadow:inset 0 0 0 1px #1a1a1a; min-height:320px; overflow-x:auto;">
-            <div style="font-size:10px; color:#666; margin-bottom:12px;">Семейное древо</div>
-            <div id="tree-generations" style="display:flex; flex-direction:column; gap:24px; align-items:center;"></div>
-        </div>
-        <div id="tree-detail" style="padding:12px 14px; background:#060606; box-shadow:inset 0 0 0 1px #1a1a1a; font-size:12px; color:#aaa; min-height:80px;">
-            <div style="color:#555; text-align:center; padding:10px;">Нажмите на члена семьи, чтобы увидеть детали.</div>
-        </div>
-        <div style="font-size:10px; color:#666; margin:12px 0 4px;">Территории</div>
-        <div id="dyn-map" style="position:relative; height:280px; background:#050505; box-shadow:inset 0 0 0 1px #1a1a1a; overflow:hidden;"></div>
-        <div id="dyn-terr-panel" class="dyn-terr-panel" style="display:none; padding:14px; background:#060606; box-shadow:inset 0 0 0 1px #1a1a1a;"></div>
-    `;
-    renderTree();
-    renderMap();
-    document.getElementById('dyn-add-wife').onclick = () => addSpouse('wife');
-    document.getElementById('dyn-add-concubine').onclick = () => addSpouse('concubine');
+function renderLog() {
+    const log = document.getElementById('dyn-log');
+    if (!log) return;
+    log.innerHTML = Dynasty.logs.map(l => `<div class="log-entry ${l.type}">${l.text}</div>`).join('') || 'Хроника пуста';
 }
 
-// === СПАВН ЖЕНЫ ===
-const SPOUSE_NAMES_M = ['Лорд Эйден', 'Лорд Кейл', 'Лорд Рован', 'Лорд Дэйн'];
-const SPOUSE_NAMES_F = ['Леди Ашера', 'Леди Лисса', 'Леди Мира', 'Леди Сэйра'];
-function addSpouse(status) {
-    const pool = state.gender === 'female' ? SPOUSE_NAMES_M : SPOUSE_NAMES_F;
-    const free = pool.filter(n => !Dynasty.spouses.map(s => s.name).includes(n));
-    if (!free.length) { addDrama(`Все кандидаты заняты.`, 'danger'); return; }
-    const name = free[Math.floor(Math.random() * free.length)];
-    const love = status === 'wife' ? 55 + Math.round(Math.random() * 20) : 35 + Math.round(Math.random() * 20);
-    Dynasty.spouses.push(makeSpouse(name, status, love, 55 + Math.round(Math.random() * 35)));
-    addDrama(status === 'wife' ? `${name} стала женой.` : `${name} взята в наложницы.`, status === 'wife' ? 'love' : 'betrayal');
-    if (status === 'concubine') { Dynasty.spouses.filter(s => s.status === 'wife').forEach(w => w.love = Math.max(0, w.love - 5)); Dynasty.scandals++; }
-    renderTree();
+function switchTab(tab) {
+    document.querySelectorAll('.dyn-tab').forEach(t => t.classList.remove('active'));
+    const tabBtn = document.querySelector(`.dyn-tab[data-tab="${tab}"]`);
+    if (tabBtn) tabBtn.classList.add('active');
+    
+    const content = document.getElementById('dyn-content');
+    if (tab === 'palace') {
+        content.innerHTML = `
+            <div class="tree-container" id="family-tree"></div>
+            <div class="info-panel" id="info-panel">Нажмите на члена семьи или территорию</div>
+            <div class="map-container" id="territory-map"></div>
+        `;
+        renderTree();
+        renderMap();
+    } else if (tab === 'war') {
+        content.innerHTML = `<div class="info-panel">Война (в разработке)</div>`;
+    } else if (tab === 'people') {
+        content.innerHTML = `<div class="info-panel">Граждане (в разработке)</div>`;
+    }
+    renderLog();
 }
 
-// === ДРЕВО (БЕЗ СЛОЖНЫХ ЛИНИЙ, ЧИСТАЯ РАСКЛАДКА) ===
 function renderTree() {
-    const gen = document.getElementById('tree-generations');
-    if (!gen) return;
-    const heroNode = `
-        <div class="tree-node heir" data-node="hero">
-            <div class="tree-portrait" style="background: radial-gradient(circle at 32% 30%, #ff0, #aa0 70%, #000);"></div>
-            <div class="tree-name">Вы</div>
-            <div style="font-size:9px; color:#666;">${Dynasty.age} лет</div>
-        </div>`;
-    const spouseNodes = Dynasty.spouses.map(sp => `
-        <div class="tree-node" data-node="spouse:${sp.id}">
-            <div class="tree-portrait" style="background: radial-gradient(circle at 32% 30%, ${sp.status === 'wife' ? '#ff66aa' : '#8844ff'}, #222 70%);"></div>
+    const tree = document.getElementById('family-tree');
+    if (!tree) return;
+    
+    let spousesHtml = Dynasty.family.spouses.map(sp => `
+        <div class="tree-node" onclick="selectNode('spouse', '${sp.id}')">
+            <div class="tree-portrait" style="background: radial-gradient(circle, #f6a, #a33);"></div>
             <div class="tree-name">${sp.name}</div>
-            <div style="font-size:9px; color:#666;">${sp.status === 'wife' ? 'Жена' : 'Наложница'} · ♥${sp.love}</div>
-        </div>`).join('');
-    
+            <div class="tree-status">${sp.status === 'wife' ? 'Жена' : 'Наложница'} · ♥${sp.love}</div>
+        </div>
+    `).join('');
+
+    const heroHtml = `
+        <div class="tree-node heir" onclick="selectNode('hero')">
+            <div class="tree-portrait" style="background: radial-gradient(circle, #ff0, #aa0);"></div>
+            <div class="tree-name">Вы</div>
+            <div class="tree-status">${Dynasty.age} лет</div>
+        </div>
+    `;
+
     const byMother = {};
-    Dynasty.children.forEach(ch => { if (!byMother[ch.motherId]) byMother[ch.motherId] = []; byMother[ch.motherId].push(ch); });
-    const childGroups = Object.keys(byMother).map(mid => {
-        const mother = Dynasty.spouses.find(s => s.id === mid);
-        const kids = byMother[mid].map(ch => `
-            <div class="tree-node ${Dynasty.heir === ch.id ? 'heir' : ''} ${ch.status === 'dead' ? 'dead' : ''}" data-node="child:${ch.id}">
-                <div class="tree-portrait" style="background: radial-gradient(circle at 32% 30%, ${ch.gender === 'male' ? '#33ccff' : '#ff66aa'}, #222 70%);"></div>
-                <div class="tree-name">${ch.name}</div>
-                <div style="font-size:9px; color:#666;">${ch.age} лет</div>
-            </div>`).join('');
-        return `<div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><div style="font-size:9px; color:#444;">${mother ? mother.name : '—'}</div><div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:center;">${kids}</div></div>`;
-    }).join('');
-    
-    gen.innerHTML = `<div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:center;">${heroNode}${spouseNodes}</div>${childGroups ? `<div style="display:flex; gap:24px; flex-wrap:wrap; justify-content:center;">${childGroups}</div>` : ''}`;
-    
-    document.querySelectorAll('#tree-generations .tree-node').forEach(node => {
-        node.onclick = () => {
-            const data = node.dataset.node;
-            if (data === 'hero') showHeroDetail();
-            else if (data.startsWith('spouse:')) showSpouseDetail(data.split(':')[1]);
-            else if (data.startsWith('child:')) showChildDetail(data.split(':')[1]);
-        };
+    Dynasty.family.children.forEach(ch => {
+        if (!byMother[ch.motherId]) byMother[ch.motherId] = [];
+        byMother[ch.motherId].push(ch);
     });
+
+    let childrenHtml = Object.keys(byMother).map(mid => {
+        const mother = Dynasty.family.spouses.find(s => s.id === mid);
+        const kids = byMother[mid].map(ch => `
+            <div class="tree-node ${Dynasty.family.heir === ch.id ? 'heir' : ''} ${ch.status === 'dead' ? 'dead' : ''}" onclick="selectNode('child', '${ch.id}')">
+                <div class="tree-portrait" style="background: radial-gradient(circle, ${ch.gender === 'male' ? '#3cf' : '#f6a'}, #222);"></div>
+                <div class="tree-name">${ch.name}</div>
+                <div class="tree-status">${ch.age} лет</div>
+            </div>
+        `).join('');
+        return `<div style="display: flex; flex-direction: column; align-items: center;">
+            <div class="tree-line-v"></div>
+            <div style="font-size: 9px; color: #555; margin-bottom: 4px;">от ${mother ? mother.name : '—'}</div>
+            <div class="tree-row">${kids}</div>
+        </div>`;
+    }).join('');
+
+    tree.innerHTML = `
+        <div class="tree-row">${heroHtml}${spousesHtml}</div>
+        ${childrenHtml ? `<div class="tree-line-v"></div><div class="tree-row">${childrenHtml}</div>` : ''}
+    `;
 }
 
-// === ДЕТАЛИ НОДОВ ===
-function showHeroDetail() {
-    document.getElementById('tree-detail').innerHTML = `
-        <div style="color:var(--accent); font-size:14px; font-weight:bold;">Вы — государь</div>
-        <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #151515; padding:2px 0;"><span>Возраст</span><span>${Dynasty.age}</span></div>
-        <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #151515; padding:2px 0;"><span>Здоровье</span><span>${Dynasty.health}</span></div>
-    `;
-}
-function showSpouseDetail(id) {
-    const sp = Dynasty.spouses.find(s => s.id === id);
-    if (!sp) return;
-    document.getElementById('tree-detail').innerHTML = `
-        <div style="color:var(--accent); font-size:14px; font-weight:bold;">${sp.name}</div>
-        <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #151515; padding:2px 0;"><span>Статус</span><span>${sp.status === 'wife' ? 'Жена' : 'Наложница'}</span></div>
-        <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #151515; padding:2px 0;"><span>Любовь</span><span>${sp.love}</span></div>
-        <div style="display:flex; gap:6px; margin-top:8px;">
-            <button class="dtp-action" onclick="handleDynastyAction('spouse-gift', '${id}')">Подарок</button>
-            <button class="dtp-action" onclick="handleDynastyAction('spouse-promote', '${id}')">${sp.status === 'wife' ? 'Понизить' : 'Повысить'}</button>
-            <button class="dtp-action" onclick="handleDynastyAction('spouse-punish', '${id}')">Наказать</button>
-        </div>
-    `;
-}
-function showChildDetail(id) {
-    const ch = Dynasty.children.find(c => c.id === id);
-    if (!ch) return;
-    const mother = Dynasty.spouses.find(s => s.id === ch.motherId);
-    document.getElementById('tree-detail').innerHTML = `
-        <div style="color:var(--accent); font-size:14px; font-weight:bold;">${ch.name}</div>
-        <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #151515; padding:2px 0;"><span>Возраст</span><span>${ch.age}</span></div>
-        <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #151515; padding:2px 0;"><span>Мать</span><span>${mother ? mother.name : '—'}</span></div>
-        <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #151515; padding:2px 0;"><span>Здоровье</span><span>${ch.health}</span></div>
-        <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #151515; padding:2px 0;"><span>Статус</span><span>${ch.status === 'dead' ? 'Мёртв' : 'Жив'}</span></div>
-        <div style="display:flex; gap:6px; margin-top:8px;">
-            ${ch.status !== 'dead' ? `
-                <button class="dtp-action primary" onclick="handleDynastyAction('child-heir', '${id}')">${Dynasty.heir === ch.id ? '★ Наследник' : 'Назначить наследником'}</button>
-                <button class="dtp-action" onclick="handleDynastyAction('child-praise', '${id}')">Похвалить</button>
-            ` : ''}
-        </div>
-    `;
-}
-window.handleDynastyAction = function(act, id) {
-    if (act === 'spouse-gift') { const sp = Dynasty.spouses.find(s => s.id === id); sp.love = Math.min(100, sp.love + 10); addDrama(`Вы одарили ${sp.name}.`, 'love'); showSpouseDetail(id); }
-    if (act === 'spouse-promote') { const sp = Dynasty.spouses.find(s => s.id === id); sp.status = sp.status === 'wife' ? 'concubine' : 'wife'; addDrama(`${sp.name} изменён статус.`, 'betrayal'); renderTree(); showSpouseDetail(id); }
-    if (act === 'spouse-punish') { const sp = Dynasty.spouses.find(s => s.id === id); sp.love = Math.max(0, sp.love - 20); addDrama(`${sp.name} наказана.`, 'danger'); showSpouseDetail(id); }
-    if (act === 'child-heir') { Dynasty.heir = id; addDrama(`Назначен новый наследник.`, 'love'); renderTree(); showChildDetail(id); }
-    if (act === 'child-praise') { const ch = Dynasty.children.find(c => c.id === id); ch.love = Math.min(100, ch.love + 8); addDrama(`Вы похвалили ${ch.name}.`, 'love'); showChildDetail(id); }
-};
-
-// === КАРТА ===
 function renderMap() {
-    const map = document.getElementById('dyn-map');
+    const map = document.getElementById('territory-map');
     if (!map) return;
-    map.innerHTML = `<div style="position:absolute; top:8px; left:10px; font-size:10px; color:#555;">КАРТА ВЛАДЕНИЙ</div>`;
+    map.innerHTML = '';
     Dynasty.territories.forEach(t => {
         const node = document.createElement('div');
-        node.style.cssText = `position:absolute; left:${t.x}%; top:${t.y}%; transform:translate(-50%,-50%); width:40px; height:40px; cursor:pointer; display:flex; flex-direction:column; align-items:center;`;
-        node.innerHTML = `<div style="width:24px; height:24px; border-radius:50%; background:#444; box-shadow:0 0 0 2px #000, 0 0 0 3px #666;"></div><div style="font-size:9px; color:#888; white-space:nowrap;">${t.name}</div>`;
-        node.onclick = () => renderTerritoryPanel(t.id);
+        node.className = 'map-node';
+        node.style.left = t.x + '%';
+        node.style.top = t.y + '%';
+        node.innerHTML = `<div class="map-icon" style="background: ${t.color}"></div><div class="map-label">${t.name}</div>`;
+        node.onclick = () => selectTerritory(t);
         map.appendChild(node);
     });
 }
-function renderTerritoryPanel(id) {
-    const panel = document.getElementById('dyn-terr-panel');
-    const t = Dynasty.territories.find(x => x.id === id);
-    if (!t) return;
-    panel.style.display = 'block';
+
+function selectNode(type, id) {
+    AudioEngine.select();
+    const panel = document.getElementById('info-panel');
+    if (!panel) return;
+    
+    if (type === 'hero') {
+        panel.innerHTML = `<div class="panel-title">Государь</div><div>Возраст: ${Dynasty.age}</div>`;
+    } else if (type === 'spouse') {
+        const sp = Dynasty.family.spouses.find(s => s.id === id);
+        panel.innerHTML = `
+            <div class="panel-title">${sp.name}</div>
+            <div class="stats">
+                <div class="stat-row"><span>Статус:</span><span>${sp.status === 'wife' ? 'Жена' : 'Наложница'}</span></div>
+                <div class="stat-row"><span>Любовь:</span><span>${sp.love}</span></div>
+            </div>
+            <div class="actions">
+                <button class="btn" onclick="actionGift('${sp.id}')">Подарок (+10 ♥)</button>
+                <button class="btn" onclick="actionPunish('${sp.id}')">Наказать (-20 ♥)</button>
+            </div>
+        `;
+    } else if (type === 'child') {
+        const ch = Dynasty.family.children.find(c => c.id === id);
+        const mother = Dynasty.family.spouses.find(s => s.id === ch.motherId);
+        panel.innerHTML = `
+            <div class="panel-title">${ch.name}</div>
+            <div class="stats">
+                <div class="stat-row"><span>Возраст:</span><span>${ch.age}</span></div>
+                <div class="stat-row"><span>Здоровье:</span><span>${ch.health}</span></div>
+                <div class="stat-row"><span>Мать:</span><span>${mother ? mother.name : '—'}</span></div>
+            </div>
+            <div class="actions">
+                ${ch.status !== 'dead' ? `<button class="btn" onclick="actionHeir('${ch.id}')">Сделать наследником</button>` : ''}
+            </div>
+        `;
+    }
+}
+
+function selectTerritory(t) {
+    AudioEngine.select();
+    const panel = document.getElementById('info-panel');
+    if (!panel) return;
     panel.innerHTML = `
-        <div style="color:var(--accent); font-weight:bold;">${t.name} (Ур. ${t.level})</div>
-        <div style="font-size:11px; color:#999; margin:4px 0;">Доход: ${t.income} | Защита: ${t.defense} | Лояльность: ${t.loyalty}</div>
-        <div style="display:flex; gap:6px; margin-top:8px;">
-            <button class="dtp-action" onclick="handleTerritoryAction('upgrade', '${t.id}')">Прокачать</button>
-            <button class="dtp-action" onclick="handleTerritoryAction('tax', '${t.id}')">Собрать налог</button>
+        <div class="panel-title">${t.name}</div>
+        <div class="stats">
+            <div class="stat-row"><span>Доход:</span><span>${t.income}</span></div>
+            <div class="stat-row"><span>Защита:</span><span>${t.def}</span></div>
         </div>
+        <div class="actions"><button class="btn" onclick="AudioEngine.confirm()">Улучшить (в разработке)</button></div>
     `;
 }
-window.handleTerritoryAction = function(act, tid) {
-    const t = Dynasty.territories.find(x => x.id === tid);
-    if (act === 'upgrade') {
-        if (t.resources < t.level * 10) { addDrama(`Не хватает ресурсов.`, 'danger'); return; }
-        t.resources -= t.level * 10; t.level++; t.income += 3; t.defense += 2; addDrama(`${t.name} улучшена.`, 'love');
-    } else if (act === 'tax') {
-        const gain = Math.round(t.income * (t.loyalty / 100)); t.resources += gain; t.loyalty = Math.max(0, t.loyalty - 6); addDrama(`Налог с ${t.name}: +${gain}.`, 'betrayal');
-    }
-    renderTerritoryPanel(tid);
-};
 
-// === ВОЙНА И ГОРОЖАНЕ ===
-function renderWar(content) {
-    const w = Dynasty.warState;
-    content.innerHTML = `
-        <div style="background:#060606; padding:16px; box-shadow:inset 0 0 0 1px #1a1a1a;">
-            <div style="color:var(--accent); font-size:14px; margin-bottom:10px;">⚔ Положение на фронте</div>
-            <div style="font-size:11px; color:#aaa;">Интенсивность: ${w.intensity} | Давление: ${w.enemyPressure} | Дезертиры: ${w.deserters}</div>
-            <div style="display:flex; gap:6px; margin-top:12px;">
-                <button class="dtp-action primary" onclick="handleWarAction('battle')">Дать бой</button>
-                <button class="dtp-action" onclick="handleWarAction('fortify')">Укрепить</button>
-            </div>
-        </div>`;
-}
-window.handleWarAction = function(act) {
-    const w = Dynasty.warState;
-    if (act === 'battle') {
-        if (Dynasty.armyFavor + Math.random() * 50 > w.enemyPressure + w.intensity) { w.enemyPressure = Math.max(0, w.enemyPressure - 10); addDrama(`Победа на фронте!`, 'love'); }
-        else { w.enemyPressure = Math.min(100, w.enemyPressure + 10); Dynasty.armyFavor = Math.max(0, Dynasty.armyFavor - 8); addDrama(`Поражение.`, 'danger'); }
-    } else if (act === 'fortify') {
-        const front = Dynasty.territories.find(t => t.id === w.frontLine); front.defense += 4; addDrama(`Укреплено.`, 'love');
-    }
-    renderWorld();
-};
-
-function renderPeople(content) {
-    const p = Dynasty.peopleState;
-    content.innerHTML = `
-        <div style="background:#060606; padding:16px; box-shadow:inset 0 0 0 1px #1a1a1a;">
-            <div style="color:var(--accent); font-size:14px; margin-bottom:10px;">♟ Горожане и казна</div>
-            <div style="font-size:11px; color:#aaa;">Казна: ${p.treasury} | Еда: ${p.food} | Волнения: ${p.unrest}</div>
-            <div style="display:flex; gap:6px; margin-top:12px;">
-                <button class="dtp-action" onclick="handlePeopleAction('feed')">Раздать еду</button>
-                <button class="dtp-action" onclick="handlePeopleAction('festival')">Праздник</button>
-            </div>
-        </div>`;
-}
-window.handlePeopleAction = function(act) {
-    const p = Dynasty.peopleState;
-    if (act === 'feed' && p.food >= 10) { p.food -= 10; p.unrest = Math.max(0, p.unrest - 10); Dynasty.peopleFavor = Math.min(100, Dynasty.peopleFavor + 8); addDrama(`Еда роздана.`, 'love'); }
-    if (act === 'festival' && p.treasury >= 20) { p.treasury -= 20; p.unrest = Math.max(0, p.unrest - 18); Dynasty.courtFavor += 5; addDrama(`Праздник!`, 'love'); }
-    renderWorld();
-};
-
-function renderWorld() {
-    const content = document.getElementById('dyn-content');
-    if (!content) return;
-    if (Dynasty.currentWorld === 'palace') renderPalace(content);
-    else if (Dynasty.currentWorld === 'war') renderWar(content);
-    else if (Dynasty.currentWorld === 'people') renderPeople(content);
-    renderDramaLog();
-}
-</script>
-<script>
-/* ============================================================
-   ДВИЖОК ВРЕМЕНИ, СТАРЕНИЕ И ДРАМЫ
-   ============================================================ */
-
-let dynYearAccum = 0;
-const YEAR_MS_HEALTHY = 180000; // 3 мин = 1 год при высоком здоровье (60 мин на жизнь)
-const YEAR_MS_WEAK = 60000;     // 1 мин = 1 год при низком здоровье (20 мин на жизнь)
-
-function currentYearMs() {
-    const h = Dynasty.health;
-    if (h >= 80) return YEAR_MS_HEALTHY;
-    if (h <= 30) return YEAR_MS_WEAK;
-    const t = (h - 30) / 50;
-    return YEAR_MS_WEAK + (YEAR_MS_HEALTHY - YEAR_MS_WEAK) * t;
+function actionGift(id) {
+    const sp = Dynasty.family.spouses.find(s => s.id === id);
+    sp.love = Math.min(100, sp.love + 10);
+    addLog(`Вы одарили ${sp.name}.`, 'love');
+    selectNode('spouse', id);
+    renderTree();
 }
 
-function setDynastySpeed(speed) {
-    Dynasty.timeScale = speed;
-    if (Dynasty.tickInterval) clearInterval(Dynasty.tickInterval);
-    if (speed === 0) { Dynasty.paused = true; return; }
-    Dynasty.paused = false;
-    Dynasty.tickInterval = setInterval(dynastyTick, 100);
+function actionPunish(id) {
+    const sp = Dynasty.family.spouses.find(s => s.id === id);
+    sp.love = Math.max(0, sp.love - 20);
+    addLog(`${sp.name} наказана.`, 'danger');
+    selectNode('spouse', id);
+    renderTree();
 }
 
-function dynastyTick() {
-    if (Dynasty.paused || Dynasty.finished) return;
-    dynYearAccum += 100 * Dynasty.timeScale;
-    if (dynYearAccum < currentYearMs()) return;
-    dynYearAccum -= currentYearMs();
-    advanceYear();
+function actionHeir(id) {
+    Dynasty.family.heir = id;
+    const ch = Dynasty.family.children.find(c => c.id === id);
+    addLog(`${ch.name} назначен наследником.`, 'love');
+    selectNode('child', id);
+    renderTree();
 }
 
-function pauseDynasty() {
-    if (Dynasty.tickInterval) clearInterval(Dynasty.tickInterval);
-    Dynasty.paused = true;
+function startTime() {
+    if (tickInterval) clearInterval(tickInterval);
+    tickInterval = setInterval(gameTick, 1000);
 }
 
-// === ЛОГИКА ГОДА ===
+function gameTick() {
+    if (Dynasty.timeSpeed === 0) return;
+    if (Math.random() < 0.1) advanceYear();
+}
+
 function advanceYear() {
-    if (Dynasty.finished) return;
     Dynasty.age++;
-    
-    const warPenalty = (Dynasty.warState?.intensity || 0) * 0.03;
-    const unrestPenalty = (Dynasty.peopleState?.unrest || 0) * 0.02;
-    Dynasty.health = Math.max(0, Math.round(Dynasty.health - 1 - warPenalty - unrestPenalty));
-    document.getElementById('dyn-age-years').textContent = Dynasty.age;
+    Dynasty.health = Math.max(0, Dynasty.health - (Math.random() < 0.2 ? 1 : 0));
+    document.getElementById('dyn-age').textContent = Dynasty.age;
+    document.getElementById('dyn-health').style.width = Dynasty.health + '%';
 
-    // Дети
-    Dynasty.children.forEach(ch => {
+    Dynasty.family.children.forEach(ch => {
         if (ch.status === 'dead') return;
         ch.age++;
-        const mother = Dynasty.spouses.find(s => s.id === ch.motherId);
-        const motherLove = mother ? mother.love : 30;
-        const wellbeing = (Dynasty.peopleFavor + (Dynasty.peopleState?.food || 50)) / 2;
-        const care = (motherLove * 0.5 + wellbeing * 0.5) / 100; 
-        const warHit = (Dynasty.warState?.intensity || 0) * 0.05;
-
+        const mother = Dynasty.family.spouses.find(s => s.id === ch.motherId);
+        const motherLove = mother ? mother.love : 0;
         if (ch.age < 14) {
-            const deathChance = Math.max(0, 0.25 - care * 0.3 + warHit * 0.01);
-            if (Math.random() < deathChance) {
+            if (motherLove > 60) ch.health = Math.min(100, ch.health + 2);
+            else if (motherLove < 30) ch.health = Math.max(0, ch.health - 5);
+            if (ch.health <= 0) {
                 ch.status = 'dead';
-                addDrama(`${ch.name} умер(ла) в возрасте ${ch.age}. Мать не смогла защитить.`, 'death');
-                Dynasty.courtFavor = Math.max(0, Dynasty.courtFavor - 5);
-                return;
+                addLog(`${ch.name} умер(ла) от недосмотра матери.`, 'death');
             }
-            if (care > 0.6) ch.health = Math.min(100, ch.health + 3);
-            else ch.health = Math.max(0, ch.health - 2);
-        } else {
-            ch.health = Math.max(0, ch.health - 1);
         }
-        if (ch.health <= 0) { ch.status = 'dead'; addDrama(`${ch.name} умер(ла) от ран/болезни.`, 'death'); }
     });
 
-    // Жёны
-    Dynasty.spouses.forEach(sp => {
-        sp.love = Math.max(0, Math.min(100, sp.love + (Math.random() < 0.5 ? 1 : -1)));
-        if (sp.status === 'concubine') sp.love = Math.max(0, sp.love - 1);
-    });
-
-    // Драмы
-    if (Dynasty.spouses.filter(s => s.status !== 'dead').length >= 2 && Math.random() < 0.25) concubineFeud();
-    if (Dynasty.children.filter(c => c.status === 'alive' && c.age >= 12).length >= 2 && Math.random() < 0.3) heirRivalry();
-    
-    // Роды
-    Dynasty.spouses.forEach(sp => {
+    Dynasty.family.spouses.forEach(sp => {
         if (sp.status === 'dead') return;
-        if (sp.fertility > 0 && Math.random() < sp.fertility / 100 * 0.5) giveBirth(sp);
-        sp.fertility = Math.max(0, sp.fertility - 4);
+        if (sp.fertility > 0 && Math.random() < 0.2) {
+            giveBirth(sp);
+            sp.fertility -= 10;
+        }
     });
 
-    // Экономика
-    Dynasty.territories.forEach(t => { t.resources += Math.round(t.income * (t.loyalty / 100)); });
-    if (Dynasty.warState) {
-        Dynasty.warState.intensity = Math.min(100, Dynasty.warState.intensity + 1);
-        Dynasty.warState.enemyPressure = Math.min(100, Dynasty.warState.enemyPressure + 1);
-    }
-
-    // Смерть героя
-    if (Dynasty.health <= 0 || Dynasty.age >= Dynasty.maxAge) { heroDies(); return; }
-
-    // Перерисовка
-    renderWorld();
-    const bar = document.getElementById('dyn-health-bar');
-    if (bar) bar.style.width = Dynasty.health + '%';
+    renderTree();
 }
 
-// === ДРАМАТИЧЕСКИЕ СОБЫТИЯ ===
-function concubineFeud() {
-    const all = Dynasty.spouses.filter(s => s.status !== 'dead');
-    const attacker = all[Math.floor(Math.random() * all.length)];
-    let victim = all[Math.floor(Math.random() * all.length)];
-    while (victim.id === attacker.id) victim = all[Math.floor(Math.random() * all.length)];
-    
-    const roll = Math.random();
-    if (roll < 0.4) {
-        victim.love = Math.max(0, victim.love - 20);
-        addDrama(`${attacker.name} плетёт интриги против ${victim.name}.`, 'betrayal');
-    } else if (roll < 0.7) {
-        Dynasty.scandals++; Dynasty.courtFavor = Math.max(0, Dynasty.courtFavor - 6);
-        addDrama(`Скандал при дворе: ${attacker.name} и ${victim.name} в ссоре.`, 'betrayal');
-    } else {
-        victim.status = 'dead'; Dynasty.scandals++; Dynasty.courtFavor = Math.max(0, Dynasty.courtFavor - 10);
-        addDrama(`${victim.name} найдена мёртвой. Подозревают ${attacker.name}.`, 'death');
-    }
-}
-
-function heirRivalry() {
-    const rivals = Dynasty.children.filter(c => c.status === 'alive' && c.age >= 12);
-    const a = rivals[Math.floor(Math.random() * rivals.length)];
-    let b = rivals[Math.floor(Math.random() * rivals.length)];
-    while (b.id === a.id) b = rivals[Math.floor(Math.random() * rivals.length)];
-    
-    const roll = Math.random();
-    if (roll < 0.5) {
-        addDrama(`${a.name} и ${b.name} ненавидят друг друга.`, 'betrayal');
-        Dynasty.courtFavor = Math.max(0, Dynasty.courtFavor - 4);
-    } else if (roll < 0.8) {
-        const victim = Math.random() < 0.5 ? a : b;
-        const killer = victim.id === a.id ? b : a;
-        victim.health = Math.max(0, victim.health - 40);
-        addDrama(`${killer.name} покушался(ась) на ${victim.name}.`, 'danger');
-        if (victim.health <= 0) {
-            victim.status = 'dead'; Dynasty.courtFavor = Math.max(0, Dynasty.courtFavor - 15);
-            addDrama(`${victim.name} убит(а) ${killer.name}. Братоубийство!`, 'death');
-        }
-    } else {
-        a.love = Math.min(100, a.love + 5); b.love = Math.min(100, b.love + 5);
-        addDrama(`${a.name} и ${b.name} примирились.`, 'love');
-    }
-}
-
-let childIdCounter = 1;
-function giveBirth(sp) {
+function giveBirth(mother) {
     const gender = Math.random() < 0.5 ? 'male' : 'female';
-    const name = (gender === 'male' ? 'Принц ' : 'Принцесса ') + (gender === 'male' ? ['Ашер', 'Торин', 'Кай'][Math.floor(Math.random()*3)] : ['Ашера', 'Лира', 'Мира'][Math.floor(Math.random()*3)]);
-    Dynasty.children.push({
-        id: 'child_' + Date.now() + '_' + (childIdCounter++), name, gender, age: 0,
-        health: 50 + Math.round(sp.love / 5), love: sp.love, motherId: sp.id,
-        education: null, status: 'alive', arrangedTo: null
+    const name = gender === 'male' ? 'Принц ' + Math.floor(Math.random()*10) : 'Принцесса ' + Math.floor(Math.random()*10);
+    Dynasty.family.children.push({
+        id: 'ch_' + Date.now(), name, gender, age: 0,
+        health: 50 + Math.round(mother.love / 2), love: mother.love, motherId: mother.id, status: 'alive'
     });
-    addDrama(`${sp.name} родила ${GENDER_LABEL[gender]?.toLowerCase() || 'ребёнка'} — ${name}.`, 'birth');
+    addLog(`${mother.name} родила ${name}.`, 'love');
 }
 
-// === ФИНАЛ ===
-function heroDies() {
-    Dynasty.finished = true;
-    pauseDynasty();
-    addDrama(`Государь умер в возрасте ${Dynasty.age} лет.`, 'death');
-    renderWorld();
-    const content = document.getElementById('dyn-content');
-    if (content) {
-        const heir = Dynasty.children.find(c => c.id === Dynasty.heir && c.status === 'alive');
-        content.innerHTML = `
-            <div style="text-align:center; padding:24px; background:#060606; box-shadow:inset 0 0 0 1px #1a1a1a;">
-                <div style="color:#f66; font-size:16px; font-weight:bold;">Конец правления</div>
-                <div style="color:#aaa; font-size:12px; margin-top:8px;">Вы прожили ${Dynasty.age} лет. Скандалов: ${Dynasty.scandals}.<br>Наследник: ${heir ? heir.name : 'не назначен'}.</div>
-                <button class="dtp-action primary" onclick="localStorage.removeItem(DYNASTY_KEY); location.reload();" style="margin-top:14px;">Начать заново</button>
-            </div>`;
-    }
+function setSpeed(speed) {
+    Dynasty.timeSpeed = speed;
+    AudioEngine.hover();
+    if (speed === 0) addLog("Время остановлено.");
+    else addLog("Время ускорилось.");
 }
-
-// === СОХРАНЕНИЕ ===
-function saveDynasty() {
-    try {
-        localStorage.setItem(DYNASTY_KEY, JSON.stringify({
-            age: Dynasty.age, health: Dynasty.health, spouses: Dynasty.spouses,
-            children: Dynasty.children, heir: Dynasty.heir, territories: Dynasty.territories,
-            courtFavor: Dynasty.courtFavor, dramaLog: Dynasty.dramaLog.slice(-50),
-            scandals: Dynasty.scandals, warState: Dynasty.warState, peopleState: Dynasty.peopleState,
-            started: Dynasty.started, character: { origin: state.origin, gender: state.gender, role: state.role, age: state.age }
-        }));
-    } catch (e) {}
-}
-
-// === ИНТЕРФЕЙС ЗАПУСКА ===
-function startDynasty() {
-    pauseDynasty();
-    if (!Dynasty.started) { initDynastyFamily(); Dynasty.started = true; }
-    
-    // Переключаем вкладки
-    document.querySelectorAll('.dyn-world-tab').forEach(t => {
-        t.classList.toggle('active', t.dataset.world === Dynasty.currentWorld);
-        t.onclick = () => {
-            Dynasty.currentWorld = t.dataset.world;
-            document.querySelectorAll('.dyn-world-tab').forEach(x => x.classList.remove('active'));
-            t.classList.add('active');
-            renderWorld();
-        };
-    });
-
-    // Скорость
-    document.querySelectorAll('.dyn-speed').forEach(btn => {
-        btn.onclick = () => {
-            setDynastySpeed(parseInt(btn.dataset.speed));
-            document.querySelectorAll('.dyn-speed .dtp-action').forEach(b => b.classList.remove('primary'));
-            btn.classList.add('primary');
-        };
-    });
-
-    document.getElementById('dyn-back').onclick = () => {
-        pauseDynasty();
-        goTo('origin');
-    };
-
-    document.getElementById('dyn-age-years').textContent = Dynasty.age;
-    document.getElementById('dyn-health-bar').style.width = Dynasty.health + '%';
-    
-    renderWorld();
-    goTo('dynasty');
-    setDynastySpeed(1);
-    saveDynasty();
-}
-
-// === КНОПКА НАЧАТЬ (СВЯЗУЮЩЕЕ ЗВЕНО) ===
-document.getElementById('start-game').onclick = () => {
-    startDynasty();
-};
-
-// === ПРОВЕРКА СОХРАНЕНИЙ ===
-(function bootDynasty() {
-    try {
-        const raw = localStorage.getItem(DYNASTY_KEY);
-        if (raw) {
-            const d = JSON.parse(raw);
-            if (d.started) {
-                Dynasty.age = d.age; Dynasty.health = d.health; Dynasty.spouses = d.spouses || [];
-                Dynasty.children = d.children || []; Dynasty.heir = d.heir; Dynasty.territories = d.territories || [];
-                Dynasty.courtFavor = d.courtFavor; Dynasty.dramaLog = d.dramaLog || [];
-                Dynasty.scandals = d.scandals; Dynasty.warState = d.warState; Dynasty.peopleState = d.peopleState;
-                Dynasty.started = true;
-                if (d.character) { state.origin = d.character.origin; state.gender = d.character.gender; state.role = d.character.role; state.age = d.character.age; }
-                
-                const banner = document.createElement('div');
-                banner.style.cssText = `position:fixed; bottom:20px; right:20px; z-index:14000; background:#0a0a0a; padding:12px 16px; max-width:260px; display:flex; flex-direction:column; gap:8px; box-shadow:0 -2px 0 0 var(--accent),0 2px 0 0 var(--accent),-2px 0 0 0 var(--accent),2px 0 0 0 var(--accent);`;
-                banner.innerHTML = `<div style="color:var(--accent); font-size:11px;">↻ Род Дриммурров</div><div style="color:#aaa; font-size:11px;">Возраст: ${Dynasty.age} лет · Детей: ${Dynasty.children.length}</div><button class="dtp-action" onclick="startDynasty()" style="margin-top:4px;">Продолжить род</button>`;
-                document.body.appendChild(banner);
-            }
-        }
-    } catch (e) {}
-})();
 </script>
 </body>
 </html>
