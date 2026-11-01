@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Dreemurr Dynasty — Character Select</title>
+<style>
+    :root {
+        --bg: #000;
+        --fg: #fff;
+        --accent: #ff0;
+        --accent-dim: #aa0;
+        --panel: #111;
+        --border: #fff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        background: var(--bg);
+        color: var(--fg);
+        font-family: 'Courier New', Courier, monospace;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        overflow-x: hidden;
+    }
+
+    #app {
+        width: 100%;
+        max-width: 960px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    h1 {
+        text-align: center;
+        font-size: 28px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        color: var(--accent);
+        text-shadow: 0 0 12px rgba(255,255,0,0.4);
+    }
+
+    .subtitle {
+        text-align: center;
+        font-size: 13px;
+        color: #888;
+        letter-spacing: 2px;
+        margin-top: -16px;
+    }
+
+    /* Экран выбора */
+    .screen {
+        border: 2px solid var(--border);
+        background: var(--panel);
+        padding: 28px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        position: relative;
+    }
+    .screen::before {
+        content: '';
+        position: absolute;
+        inset: -6px;
+        border: 1px dashed rgba(255,255,255,0.15);
+        pointer-events: none;
+    }
+
+    .section-title {
+        font-size: 14px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--accent-dim);
+        border-bottom: 1px solid #333;
+        padding-bottom: 6px;
+    }
+
+    /* Пол */
+    .gender-row {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+    }
+    .gender-btn {
+        flex: 1;
+        max-width: 220px;
+        background: transparent;
+        border: 2px solid #444;
+        color: var(--fg);
+        font-family: inherit;
+        font-size: 16px;
+        padding: 14px;
+        cursor: pointer;
+        transition: all 0.15s;
+        letter-spacing: 2px;
+    }
+    .gender-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+    .gender-btn.active {
+        border-color: var(--accent);
+        background: rgba(255,255,0,0.08);
+        color: var(--accent);
+        box-shadow: 0 0 16px rgba(255,255,0,0.25);
+    }
+
+    /* Сетка ролей */
+    .roles-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 16px;
+    }
+
+    .role-card {
+        border: 2px solid #444;
+        background: #0a0a0a;
+        padding: 16px;
+        cursor: pointer;
+        transition: all 0.15s;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        position: relative;
+    }
+    .role-card:hover {
+        border-color: var(--accent-dim);
+        transform: translateY(-2px);
+    }
+    .role-card.active {
+        border-color: var(--accent);
+        background: rgba(255,255,0,0.05);
+        box-shadow: 0 0 20px rgba(255,255,0,0.15);
+    }
+    .role-card.disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        filter: grayscale(1);
+    }
+
+    .role-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        border: 2px solid #fff;
+    }
+
+    .role-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .role-name {
+        font-size: 15px;
+        font-weight: bold;
+        color: var(--fg);
+        letter-spacing: 1px;
+    }
+    .role-desc {
+        font-size: 12px;
+        color: #999;
+        line-height: 1.4;
+    }
+
+    /* Кнопка старта */
+    .start-row {
+        display: flex;
+        justify-content: center;
+        padding-top: 8px;
+    }
+    .start-btn {
+        background: transparent;
+        border: 2px solid var(--accent);
+        color: var(--accent);
+        font-family: inherit;
+        font-size: 18px;
+        padding: 14px 48px;
+        cursor: pointer;
+        letter-spacing: 4px;
+        transition: all 0.15s;
+    }
+    .start-btn:hover:not(:disabled) {
+        background: var(--accent);
+        color: #000;
+        box-shadow: 0 0 24px rgba(255,255,0,0.5);
+    }
+    .start-btn:disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+        border-color: #555;
+        color: #555;
+    }
+
+    /* Игровой экран-заглушка */
+    #game-screen {
+        display: none;
+        flex-direction: column;
+        gap: 24px;
+        align-items: center;
+        text-align: center;
+    }
+    #game-screen.visible { display: flex; }
+
+    .hero-display {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+    }
+    .hero-circle {
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        border: 3px solid var(--accent);
+        box-shadow: 0 0 40px rgba(255,255,0,0.3);
+    }
+    .hero-name {
+        font-size: 22px;
+        color: var(--accent);
+        letter-spacing: 3px;
+    }
+    .hero-role {
+        font-size: 14px;
+        color: #aaa;
+        letter-spacing: 2px;
+    }
+    .hero-gender {
+        font-size: 12px;
+        color: #666;
+    }
+    .placeholder-note {
+        font-size: 12px;
+        color: #555;
+        border: 1px dashed #333;
+        padding: 12px 20px;
+        max-width: 500px;
+        line-height: 1.6;
+    }
+    .back-btn {
+        background: transparent;
+        border: 2px solid #555;
+        color: #aaa;
+        font-family: inherit;
+        font-size: 13px;
+        padding: 8px 20px;
+        cursor: pointer;
+        letter-spacing: 2px;
+    }
+    .back-btn:hover { border-color: var(--fg); color: var(--fg); }
+</style>
+</head>
+<body>
+<div id="app">
+
+    <!-- ЭКРАН ВЫБОРА -->
+    <div id="select-screen" class="screen">
+        <h1>Dreemurr Dynasty</h1>
+        <div class="subtitle">ВЫБЕРИТЕ СВОЮ РОЛЬ В ВОЙНЕ</div>
+
+        <!-- Пол -->
+        <div>
+            <div class="section-title">Пол</div>
+            <div class="gender-row" style="margin-top:12px;">
+                <button class="gender-btn" data-gender="male">МУЖСКОЙ</button>
+                <button class="gender-btn" data-gender="female">ЖЕНСКИЙ</button>
+            </div>
+        </div>
+
+        <!-- Роли -->
+        <div>
+            <div class="section-title">Роль</div>
+            <div id="roles-grid" class="roles-grid" style="margin-top:12px;"></div>
+        </div>
+
+        <!-- Старт -->
+        <div class="start-row">
+            <button id="start-btn" class="start-btn" disabled>НАЧАТЬ</button>
+        </div>
+    </div>
+
+    <!-- ИГРОВОЙ ЭКРАН (заглушка) -->
+    <div id="game-screen" class="screen">
+        <h1 style="font-size:20px;">ВЫ ВСТУПИЛИ В ИГРУ</h1>
+        <div class="hero-display">
+            <div id="hero-circle" class="hero-circle"></div>
+            <div id="hero-name" class="hero-name"></div>
+            <div id="hero-role" class="hero-role"></div>
+            <div id="hero-gender" class="hero-gender"></div>
+        </div>
+        <div class="placeholder-note">
+            Здесь будет игровой процесс: война, ресурсы, семья, решения.<br>
+            Пока это заглушка. Выбранный персонаж сохранён.
+        </div>
+        <button id="back-btn" class="back-btn">← НАЗАД К ВЫБОРУ</button>
+    </div>
+
+</div>
+
+<script>
+/* ---------- ДАННЫЕ РОЛЕЙ ---------- */
+const ROLES = [
+    {
+        id: 'asgore_proto',
+        name: 'Главнокомандующий / Хранитель Очага',
+        desc: 'Берёт на себя тяжесть военных решений. Огненная магия, попытки дипломатии. Радикалы считают его слишком мягким.',
+        gender: 'male',
+        color1: '#ff6b35', color2: '#aa2200'
+    },
+    {
+        id: 'prince_avant',
+        name: 'Принц-Авангардист',
+        desc: 'Молодой наследник рвётся в бой. Опасные вылазки на территории людей. Риск погибнуть, но колоссальный авторитет у генералов.',
+        gender: 'male',
+        color1: '#ffcc00', color2: '#aa6600'
+    },
+    {
+        id: 'exile_general',
+        name: 'Опальный Генерал / Изгнанник',
+        desc: 'Не согласен с пассивной политикой короля. Собирает радикалов для партизанской войны и будущего переворота.',
+        gender: 'male',
+        color1: '#8844ff', color2: '#331188'
+    },
+    {
+        id: 'border_knight',
+        name: 'Рыцарь-Защитник Окраин',
+        desc: 'Правит приграничьем, принимающим первый удар. Держит оборону минимальными ресурсами. Выстоит — авторитет превысит королевский.',
+        gender: 'male',
+        color1: '#33aa77', color2: '#115533'
+    },
+    {
+        id: 'queen_strategist',
+        name: 'Королева-Стратег / Верховный Судья',
+        desc: 'Управляет внутренней политикой и логистикой. Распределяет ресурсы, следит за безопасностью, руководит магической защитой столицы. Вето в совете.',
+        gender: 'female',
+        color1: '#ff66aa', color2: '#991155'
+    },
+    {
+        id: 'chief_diplomat',
+        name: 'Главный Дипломат / Хранительница Знаний',
+        desc: 'Пытается вести переговоры с человеческими магами. Сильная исцеляющая магия, собирает артефакты для выживания в изоляции.',
+        gender: 'female',
+        color1: '#33ccff', color2: '#116699'
+    },
+    {
+        id: 'shadow_mother',
+        name: 'Глава Тайной Канцелярии / «Теневая» Мать',
+        desc: 'Плетёт интриги при дворе. Шпионаж, устранение конкурентов, продвижение своих детей к престолу, пока законные наследники гибнут на фронте.',
+        gender: 'female',
+        color1: '#777777', color2: '#222222'
+    },
+    {
+        id: 'rebel_warrior',
+        name: 'Мятежная Воительница / Лидер Подполья',
+        desc: 'Отринула дворцовый этикет. Лично ведёт элитные отряды в бой. Цель — доказать, что король слаб, и занять его место по праву силы.',
+        gender: 'female',
+        color1: '#ff3355', color2: '#881122'
+    }
+];
+
+/* ---------- СОСТОЯНИЕ ---------- */
+const state = {
+    gender: null,
+    roleId: null
+};
+
+/* ---------- DOM ---------- */
+const genderBtns = document.querySelectorAll('.gender-btn');
+const rolesGrid = document.getElementById('roles-grid');
+const startBtn = document.getElementById('start-btn');
+const selectScreen = document.getElementById('select-screen');
+const gameScreen = document.getElementById('game-screen');
+
+/* ---------- ОТРИСОВКА РОЛЕЙ ---------- */
+function renderRoles() {
+    rolesGrid.innerHTML = '';
+    ROLES.forEach(role => {
+        const card = document.createElement('div');
+        card.className = 'role-card';
+        card.dataset.roleId = role.id;
+
+        const avatar = document.createElement('div');
+        avatar.className = 'role-avatar';
+        avatar.style.background = `radial-gradient(circle at 30% 30%, ${role.color1}, ${role.color2})`;
+
+        const info = document.createElement('div');
+        info.className = 'role-info';
+        info.innerHTML = `
+            <div class="role-name">${role.name}</div>
+            <div class="role-desc">${role.desc}</div>
+        `;
+
+        card.appendChild(avatar);
+        card.appendChild(info);
+
+        card.addEventListener('click', () => {
+            if (card.classList.contains('disabled')) return;
+            selectRole(role.id);
+        });
+
+        rolesGrid.appendChild(card);
+    });
+}
+
+/* ---------- ВЫБОР ПОЛА ---------- */
+function selectGender(gender) {
+    state.gender = gender;
+    genderBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.gender === gender);
+    });
+    // Если выбранная роль не подходит под пол — сбросить
+    if (state.roleId) {
+        const role = ROLES.find(r => r.id === state.roleId);
+        if (role && role.gender !== gender) {
+            state.roleId = null;
+        }
+    }
+    updateRoleAvailability();
+    updateStartButton();
+}
+
+/* ---------- ВЫБОР РОЛИ ---------- */
+function selectRole(roleId) {
+    state.roleId = roleId;
+    document.querySelectorAll('.role-card').forEach(card => {
+        card.classList.toggle('active', card.dataset.roleId === roleId);
+    });
+    updateStartButton();
+}
+
+/* ---------- ДОСТУПНОСТЬ РОЛЕЙ ПО ПОЛУ ---------- */
+function updateRoleAvailability() {
+    document.querySelectorAll('.role-card').forEach(card => {
+        const role = ROLES.find(r => r.id === card.dataset.roleId);
+        const matches = !state.gender || role.gender === state.gender;
+        card.classList.toggle('disabled', !matches);
+        card.classList.toggle('active', matches && role.id === state.roleId);
+    });
+}
+
+/* ---------- КНОПКА СТАРТА ---------- */
+function updateStartButton() {
+    startBtn.disabled = !(state.gender && state.roleId);
+}
+
+/* ---------- СТАРТ ИГРЫ ---------- */
+function startGame() {
+    if (!state.gender || !state.roleId) return;
+
+    const role = ROLES.find(r => r.id === state.roleId);
+    const genderLabel = state.gender === 'male' ? 'Мужской' : 'Женский';
+
+    // Заполняем экран-заглушку
+    const circle = document.getElementById('hero-circle');
+    circle.style.background = `radial-gradient(circle at 30% 30%, ${role.color1}, ${role.color2})`;
+    document.getElementById('hero-name').textContent = role.name;
+    document.getElementById('hero-role').textContent = role.desc;
+    document.getElementById('hero-gender').textContent = `Пол: ${genderLabel}`;
+
+    selectScreen.style.display = 'none';
+    gameScreen.classList.add('visible');
+
+    // Сохраняем выбор (на будущее)
+    localStorage.setItem('dreemurr_choice', JSON.stringify({
+        gender: state.gender,
+        roleId: state.roleId,
+        roleName: role.name
+    }));
+}
+
+/* ---------- НАЗАД ---------- */
+function backToSelect() {
+    gameScreen.classList.remove('visible');
+    selectScreen.style.display = 'flex';
+}
+
+/* ---------- ИНИЦИАЛИЗАЦИЯ ---------- */
+genderBtns.forEach(btn => {
+    btn.addEventListener('click', () => selectGender(btn.dataset.gender));
+});
+
+startBtn.addEventListener('click', startGame);
+document.getElementById('back-btn').addEventListener('click', backToSelect);
+
+renderRoles();
+updateStartButton();
+</script>
+</body>
+</html>
